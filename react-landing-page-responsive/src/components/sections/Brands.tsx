@@ -1,29 +1,64 @@
 import { Container } from "../shared/Container";
 import { Title } from "../shared/Title";
 
-const logos = ["discord", "openai", "paypal", "slack", "spotify", "youtube"];
+const designedFor = [
+  { label: "Startups", icon: "🚀" },
+  { label: "Tech Companies", icon: "🏢" },
+  { label: "Recruitment Agencies", icon: "📋" },
+  { label: "Fresh Graduates", icon: "🎓" },
+  { label: "Hiring Managers", icon: "👔" },
+];
 
 export const Brands = () => {
   return (
-    <section>
-      {" "}
-      <Container className="space-y-8">
-        <div className="text-center max-w-3xl mx-auto">
-          <Title> Trusted by Industry Leaders </Title>
+    <section className="relative">
+      <Container className="space-y-14">
+        {/* Heading */}
+        <div className="text-center max-w-3xl mx-auto space-y-4">
+          <Title>Designed for Real-World Hiring</Title>
+          <p className="text-zinc-300 text-sm sm:text-base leading-relaxed">
+            RecruitO is designed to support hiring workflows for companies of all
+            sizes and job seekers across domains.
+          </p>
         </div>
-        <div className="flex justify-center flex-wrap gap-4">
-          {logos.map((logo, key) => (
+
+        {/* Minimal interactive items */}
+        <div className="flex justify-center flex-wrap gap-12">
+          {designedFor.map((item, key) => (
             <div
               key={key}
-              className="p-4 sm:p-5 rounded-xl bg-body border border-box-border group"
+              className="
+                group
+                flex flex-col items-center
+                cursor-pointer
+                transition-transform duration-300 ease-out
+                hover:scale-110
+              "
             >
-              <img
-                src={`/assets/logos/${logo}.png`}
-                width="100"
-                height="60"
-                alt={logo}
-                className="h-7 sm:h-10 w-auto ease-linear duration-300 grayscale group-hover:!grayscale-0 group-hover:scale-105"
-              />
+              {/* Emoji */}
+              <span
+                className="
+                  text-5xl mb-3 select-none
+                  opacity-50 grayscale
+                  transition-all duration-300
+                  group-hover:opacity-100
+                  group-hover:grayscale-0
+                "
+              >
+                {item.icon}
+              </span>
+
+              {/* Label */}
+              <p
+                className="
+                  text-base sm:text-lg font-semibold
+                  text-zinc-400
+                  transition-colors duration-300
+                  group-hover:text-zinc-200
+                "
+              >
+                {item.label}
+              </p>
             </div>
           ))}
         </div>

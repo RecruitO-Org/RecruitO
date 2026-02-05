@@ -1,42 +1,45 @@
 import { Container } from "../shared/Container";
 
+const features = [
+  {
+    title: "AI-Driven Resume Matching",
+    desc: "Automatically match resumes with job requirements using AI.",
+  },
+  {
+    title: "Skill Gap Detection",
+    desc: "Identify missing skills and areas for improvement instantly.",
+  },
+  {
+    title: "Secure Online Interviews",
+    desc: "Conduct monitored interviews with screen sharing and proctoring.",
+  },
+  {
+    title: "Real-Time Vacancy Tracking",
+    desc: "Track openings and applicants live across the platform.",
+  },
+];
+
 export const Numbers = () => {
   return (
-    <section className="relative mt-12 md:mt-16">
-      <Container className="flex justify-center align-center">
-        <div
-          className="mx-auto lg:mx-0 p-5 sm:p-6 sm:py-8 max-w-5xl rounded-3xl bg-box-bg
-                        border border-box-border shadow-lg shadow-box-shadow md:divide-x divide-box-border
-                        grid grid-cols-2 md:grid-cols-4"
-        >
-          <div className="text-center px-4">
-            <h2 className="font-semibold text-l sm:text-xl md:text-2xl text-heading-1">
-              {" "}
-              AI-Driven Resume Matching{" "}
-            </h2>
-            <p className="mt-2 text-heading-3"> </p>
-          </div>
-          <div className="text-center px-5">
-            <h2 className="font-semibold text-l sm:text-xl md:text-2xl text-heading-1">
-              {" "}
-              Skill Gap Detection{" "}
-            </h2>
-            <p className="mt-2 text-heading-3"> </p>
-          </div>
-          <div className="text-center px-5">
-            <h2 className="font-semibold text-l sm:text-xl md:text-2xl text-heading-1">
-              {" "}
-              Secure Online Interviews{" "}
-            </h2>
-            <p className="mt-2 text-heading-3"> </p>
-          </div>
-          <div className="text-center px-5">
-            <h2 className="font-semibold text-l sm:text-xl md:text-2xl text-heading-1">
-              {" "}
-              Real-Time Vacancy Tracking{" "}
-            </h2>
-            <p className="mt-2 text-heading-3"> </p>
-          </div>
+    <section className="relative mt-20 md:mt-28">
+      <Container>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-14 text-left">
+          {features.map((item, i) => (
+            <div key={i} className="space-y-4">
+              {/* title */}
+              <h3 className="text-lg sm:text-xl font-semibold text-white leading-snug">
+                {item.title}
+              </h3>
+
+              {/* subtle divider */}
+              <div className="h-[2px] w-12 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full" />
+
+              {/* description */}
+              <p className="text-sm sm:text-base text-zinc-400 leading-relaxed">
+                {item.desc}
+              </p>
+            </div>
+          ))}
         </div>
       </Container>
     </section>
