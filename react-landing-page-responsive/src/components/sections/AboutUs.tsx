@@ -11,7 +11,7 @@ export const AboutUs = () => {
         <div className="w-full md:w-5/12 lg:w-1/2">
           <div className="w-full h-80 sm:h-96 relative">
             <img
-              src="https://images.pexels.com/photos/8728381/pexels-photo-8728381.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+              src="https://etimg.etb2bimg.com/photo/123358134.cms"
               className="w-full h-full object-cover rounded-3xl shadow-lg relative z-10"
               alt="About Our Mission"
             />
