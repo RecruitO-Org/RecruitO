@@ -1,21 +1,16 @@
-import { Layout } from "./components/Layout";
-import { AboutUs } from "./components/sections/AboutUs";
-import { Brands } from "./components/sections/Brands";
-import { CTA } from "./components/sections/CallToAction";
-import { Hero } from "./components/sections/Hero";
-import { Pricing } from "./components/sections/Pricing";
-import { Services } from "./components/sections/Services";
+import { Routes, Route } from "react-router-dom";
+import Landing from "./pages/landing/Landing";
+import Login from "./pages/auth/Login";
+
+// import { Signup } from "./pages/auth/Signup";
 
 function App() {
   return (
-    <Layout title="RecruitO">
-      <Hero />
-      <Brands />
-      <Services />
-      <AboutUs />
-      <Pricing />
-      <CTA />
-    </Layout>
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<Login />} />
+      {/* <Route path="/signup" element={<Signup />} /> */} 
+    </Routes>
   );
 }
 
