@@ -6,20 +6,19 @@ import { Title } from "../shared/Title";
 
 export const Services = () => {
   return (
-    <section id="services">
-      {" "}
+    <section id="services" className="py-20 scroll-mt-24">
       <Container className="space-y-10 md:space-y-12">
+        {/* Heading */}
         <div className="text-center max-w-3xl mx-auto space-y-4">
-          <Title> How RecruitO Works</Title>
+          <Title>How RecruitO Works</Title>
           <Paragraph>
-            RecruitO uses AI to analyze resumes, match candidates with job requirements, identify skill gaps, and enable secure hiring — all in one intelligent platform.
+            RecruitO uses AI to analyze resumes, match candidates with job requirements,
+            identify skill gaps, and enable secure hiring — all in one intelligent platform.
           </Paragraph>
         </div>
 
-        {/* <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-         */}
-         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-
+        {/* Services grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {services.map((service, key) => (
             <Service
               key={key}
