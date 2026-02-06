@@ -1,7 +1,45 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 export default function Signup() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const navigate = useNavigate();
+
+const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // Validation
+    if (!name || !email || !password) {
+      setError("All fields are required");
+      return;
+    }
+
+     // Validation: name should not contain digits
+    if (/\d/.test(name)) {
+      setError("Name should not contain numbers");
+      return;
+    }
+    
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    // Clear error
+    setError("");
+
+    // Temporary success (backend later)
+    console.log("Signup data:", { name, email, password });
+
+    // Redirect after signup
+    navigate("/dashboard");
+  };
+
   return (
     <section className="min-h-screen flex items-center justify-center bg-body px-4">
       <motion.div
@@ -24,11 +62,13 @@ export default function Signup() {
         </p>
 
         {/* Form */}
-        <form className="mt-8 space-y-5">
+        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
           {/* Name */}
           <input
             type="text"
             placeholder="Full Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             className="
               w-full px-5 py-3 rounded-xl
               bg-body border border-box-border
@@ -43,6 +83,8 @@ export default function Signup() {
           <input
             type="email"
             placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="
               w-full px-5 py-3 rounded-xl
               bg-body border border-box-border
@@ -57,6 +99,8 @@ export default function Signup() {
           <input
             type="password"
             placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="
               w-full px-5 py-3 rounded-xl
               bg-body border border-box-border
@@ -66,6 +110,13 @@ export default function Signup() {
               focus:border-violet-500
             "
           />
+
+          {/* Error message */}
+          {error && (
+            <p className="text-sm text-red-500 text-center">
+              {error}
+            </p>
+          )}
 
           {/* Submit */}
           <button

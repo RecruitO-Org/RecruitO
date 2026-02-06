@@ -1,8 +1,35 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 const SignIn = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const navigate = useNavigate();
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // Validation
+    if (!email || !password) {
+      setError("Email and password are required");
+      return;
+    }
+
+    // Clear error
+    setError("");
+
+    // Temporary success (backend later)
+    console.log("Login data:", { email, password });
+
+    // Redirect to dashboard
+    navigate("/dashboard");
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4
+    <div
+      className="min-h-screen flex items-center justify-center px-4
       bg-gray-50 dark:bg-gradient-to-br dark:from-black dark:via-gray-900 dark:to-black"
     >
       <div
@@ -19,7 +46,7 @@ const SignIn = () => {
         </p>
 
         {/* Form */}
-        <form className="mt-8 space-y-5">
+        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
           {/* Email */}
           <div>
             <label className="block text-sm mb-1 text-gray-700 dark:text-gray-300">
@@ -28,6 +55,8 @@ const SignIn = () => {
             <input
               type="email"
               placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 rounded-xl
               bg-white text-gray-900 placeholder-gray-400
               border border-gray-300
@@ -44,6 +73,8 @@ const SignIn = () => {
             <input
               type="password"
               placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 rounded-xl
               bg-white text-gray-900 placeholder-gray-400
               border border-gray-300
@@ -61,6 +92,13 @@ const SignIn = () => {
               Forgot password?
             </button>
           </div>
+
+          {/* Error message */}
+          {error && (
+            <p className="text-sm text-red-500 text-center">
+              {error}
+            </p>
+          )}
 
           {/* Login button */}
           <button
