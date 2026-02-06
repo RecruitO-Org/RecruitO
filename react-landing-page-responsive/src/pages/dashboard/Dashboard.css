@@ -1,0 +1,126 @@
+/* ===============================
+   Dashboard Animations & Base
+   =============================== */
+
+.dashboard-root {
+  animation: fadeIn 0.6s ease-out;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dashboard-header {
+  animation: slideDown 0.6s ease-out;
+}
+
+/* Card animation */
+.dashboard-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease,
+    background-color 0.3s ease, color 0.3s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Stat animation */
+.stat-value {
+  animation: popIn 0.4s ease-out;
+}
+
+/* ===============================
+   FORCE DARK MODE (IMPORTANT)
+   =============================== */
+
+/* Background + text */
+.dark .dashboard-root {
+  background-color: #0f172a; /* slate-900 */
+  color: #e5e7eb; /* slate-200 */
+}
+
+/* Cards in dark mode */
+.dark .dashboard-card {
+  background-color: #020617; /* slate-950 */
+  border: 1px solid #1e293b; /* slate-800 */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+}
+
+/* Headings */
+.dark h1,
+.dark h2,
+.dark h3 {
+  color: #f8fafc; /* slate-50 */
+}
+
+/* Muted text */
+.dark .text-muted-foreground {
+  color: #94a3b8 !important; /* slate-400 */
+}
+
+/* Buttons */
+.dark button {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ===============================
+   Animations
+   =============================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ===============================
+   FIX TEXT VISIBILITY IN DARK MODE
+   =============================== */
+
+/* Force readable text inside cards */
+.dark .dashboard-card {
+  color: #e5e7eb; /* slate-200 */
+}
+
+/* Card titles */
+.dark .dashboard-card h1,
+.dark .dashboard-card h2,
+.dark .dashboard-card h3,
+.dark .dashboard-card h4 {
+  color: #f8fafc; /* slate-50 */
+}
+
+/* Normal paragraph text */
+.dark .dashboard-card p,
+.dark .dashboard-card li {
+  color: #cbd5f5; /* slate-300 */
+}
+
+/* Muted text (overrides shadcn muted color) */
+.dark .dashboard-card .text-muted-foreground {
+  color: #94a3b8 !important; /* slate-400 */
+}
