@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 
 export const AboutUs = () => {
   return (
-    <section id="about-us" className="py-20">
+    <section id="about-us" className="py-20 scroll-mt-24">
       <Container className="flex flex-col md:flex-row gap-10 lg:gap-14 items-center">
 
         {/* IMAGE */}
@@ -44,7 +44,7 @@ export const AboutUs = () => {
             <Title>About RecruitO</Title>
           </motion.div>
 
-          {/* GAP + DESCRIPTION */}
+          {/* DESCRIPTION */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -92,7 +92,6 @@ export const AboutUs = () => {
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="30"
                   fill="none"
                   viewBox="0 0 24 24"
                   strokeWidth="1.5"
@@ -121,7 +120,6 @@ export const AboutUs = () => {
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="30"
                   fill="none"
                   viewBox="0 0 24 24"
                   strokeWidth="1.5"
