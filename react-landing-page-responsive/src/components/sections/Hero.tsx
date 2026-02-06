@@ -2,45 +2,73 @@ import { Button } from "../shared/Button";
 import { Container } from "../shared/Container";
 import { Paragraph } from "../shared/Paragraph";
 import { Numbers } from "./Numbers";
+import { motion } from "framer-motion";
 
 export const Hero = () => {
   return (
     <section className="relative pt-32 lg:pt-36">
-      {" "}
       <Container className="flex flex-col lg:flex-row gap-10 lg:gap-12">
-        <div className="absolute w-full lg:w-1/2 inset-y-0 lg:right-0">
+
+        {/* Background glow (fade only) */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1 }}
+          className="absolute w-full lg:w-1/2 inset-y-0 lg:right-0"
+        >
           <span
             className="absolute -left-6 md:left-4 top-24 lg:top-28 w-24 h-24 rotate-90 
-                        skew-x-12 rounded-3xl bg-gradient-to-r from-blue-600 to-violet-600
-                        blur-xl opacity-60 lg:opacity-95 lg:block hidden"
+              skew-x-12 rounded-3xl bg-gradient-to-r from-blue-600 to-violet-600
+              blur-xl opacity-60 lg:opacity-95 lg:block hidden"
           ></span>
           <span className="absolute right-4 bottom-12 w-24 h-24 rounded-3xl bg-primary blur-xl opacity-80"></span>
-        </div>
+        </motion.div>
 
-        <div
+        {/* LEFT CONTENT */}
+        <motion.div
+          initial={{ opacity: 0, x: -40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           className="relative flex flex-col items-center text-center lg:text-left lg:py-8 lg:items-start
-                        lg:max-w-none max-w-3xl mx-auto lg:mx-0 lg:flex-1 lg:w-1/2"
+            lg:max-w-none max-w-3xl mx-auto lg:mx-0 lg:flex-1 lg:w-1/2"
         >
-          <h1 className="text-heading-1 text-3xl sm:text-4xl md:text-5xl xl:text-6xl font-bold">
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+            className="text-heading-1 text-3xl sm:text-4xl md:text-5xl xl:text-6xl font-bold"
+          >
             AI-Powered Hiring Made Simple
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-violet-600 ml-2">
               {" "}
             </span>
-          </h1>
-          <Paragraph className="mt-8">
-            An intelligent platform that matches resumes with job requirements, identifies skill gaps, conducts AI-based assessments, and enables smart interviews for job seekers and companies.
-          </Paragraph>
-          <div className="mt-10 w-full flex max-w-md mx-auto lg:mx-0">
+          </motion.h1>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35, duration: 0.6 }}
+          >
+            <Paragraph className="mt-8">
+              An intelligent platform that matches resumes with job requirements, identifies skill gaps, conducts AI-based assessments, and enables smart interviews for job seekers and companies.
+            </Paragraph>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.6 }}
+            className="mt-10 w-full flex max-w-md mx-auto lg:mx-0"
+          >
             <div className="flex sm:flex-row flex-col gap-5 w-full">
               <form
                 action="#"
                 className="py-1 pl-6 w-full pr-1 flex gap-3 items-center text-heading-3
-                                          shadow-lg shadow-box-shadow border border-box-border
-                                          bg-box-bg rounded-full ease-linear focus-within:bg-body
-                                          focus-within:border-primary"
+                  shadow-lg shadow-box-shadow border border-box-border
+                  bg-box-bg rounded-full ease-linear focus-within:bg-body
+                  focus-within:border-primary"
               >
                 <span className="min-w-max pr-2 border-r border-box-border">
-                  {" "}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"
@@ -67,18 +95,27 @@ export const Hero = () => {
                 </Button>
               </form>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        <div className="flex flex-1 lg:w-1/2 lg:h-auto relative lg:max-w-non lg:mx-0 mx-auto max-w-3xl">
-          <img
+        {/* RIGHT IMAGE */}
+        <motion.div
+          initial={{ opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.9, ease: "easeOut" }}
+          className="flex flex-1 lg:w-1/2 lg:h-auto relative lg:max-w-non lg:mx-0 mx-auto max-w-3xl"
+        >
+          <motion.img
             src="/image.png"
             alt="Hero image"
             width={2350}
             height={2359}
             className="lg:absolute lg:w-full lg:h-full rounded-3xl object-cover lg:max-h-non max-h-96"
+            animate={{ y: [0, -6, 0] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
           />
-        </div>
+        </motion.div>
+
       </Container>
       <Numbers />
     </section>
