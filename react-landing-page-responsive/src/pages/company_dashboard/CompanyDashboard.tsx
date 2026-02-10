@@ -1,4 +1,4 @@
-import { Sidebar } from "./Sidebar";
+import Sidebar from "./Sidebar";
 
 import StatCard from "./StatCard";
 import Applicants from "./Applicants";
