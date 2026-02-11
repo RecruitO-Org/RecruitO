@@ -1,67 +1,140 @@
-import Sidebar from "./Sidebar";
-
+import CompanyLayout from "./CompanyLayout";
+import {
+  Briefcase,
+  Users,
+  Video,
+  CheckCircle,
+} from "lucide-react";
 import StatCard from "./StatCard";
-import Applicants from "./Applicants";
-export default function CompanyDashboard() {
+import { useNavigate } from "react-router-dom";
+
+export default function Dashboard() {
+  const navigate = useNavigate();
+
   return (
-    <div className="flex bg-gray-100 min-h-screen">
-      <Sidebar />
+    <CompanyLayout>
+      <div className="p-6">
 
-      <div className="flex-1 p-8">
-        {/* Greeting */}
-        <div className="bg-indigo-600 text-white p-6 rounded-xl flex justify-between items-center">
-          <div>
-            <h2 className="text-xl font-bold">Hello Katie!</h2>
-            <p>You have 16 new applications today.</p>
+        {/* Hero Section */}
+        <div
+          className="
+            mb-12 rounded-2xl p-8
+            bg-gradient-to-r from-indigo-600 via-blue-600 to-purple-600
+            dark:from-indigo-700 dark:via-blue-700 dark:to-purple-700
+            text-white shadow-xl
+          "
+        >
+          <h2 className="text-3xl font-bold">
+            Welcome back 👋
+          </h2>
+
+          <p className="mt-3 text-white/90 max-w-xl text-sm sm:text-base">
+            Manage jobs, applicants, interviews, and hiring insights — all from one place.
+          </p>
+        </div>
+
+        {/* Stats Section */}
+        <div className="mb-12">
+          <h3 className="text-sm uppercase tracking-wider font-semibold text-gray-800 dark:text-gray-400 mb-6">
+          Hiring Overview
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatCard
+              title="Active Job Postings"
+              value={12}
+              icon={<Briefcase size={22} />}
+              color="from-indigo-500 to-indigo-600"
+            />
+
+            <StatCard
+              title="Total Applicants"
+              value={348}
+              icon={<Users size={22} />}
+              color="from-blue-500 to-blue-600"
+            />
+
+            <StatCard
+              title="Interviews Scheduled"
+              value={24}
+              icon={<Video size={22} />}
+              color="from-yellow-500 to-orange-500"
+            />
+
+            <StatCard
+              title="Candidates Selected"
+              value={8}
+              icon={<CheckCircle size={22} />}
+              color="from-green-500 to-emerald-600"
+            />
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-6 mt-6">
-          <StatCard title="Content Designers" count="3" percent="75" />
-          <StatCard title="Node.js Developers" count="9" percent="25" />
-          <StatCard title="Senior UI Designer" count="1" percent="0" />
-          <StatCard title="Marketing Managers" count="2" percent="45" />
-        </div>
+        {/* Quick Actions */}
+        <div className="mb-12">
+          <h3 className="text-sm uppercase tracking-wider font-semibold text-gray-800 dark:text-gray-400 mb-6">
+          Quick Actions
+          </h3>
 
-        {/* Bottom Section */}
-        <div className="grid grid-cols-3 gap-6 mt-6">
-          {/* Recruitment Table */}
-          <div className="col-span-2 bg-white p-5 rounded-xl shadow-sm">
-            <h3 className="font-semibold mb-4">Recruitment Progress</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <button
+              onClick={() => navigate("/company/job-postings")}
+              className="
+                bg-gradient-to-r from-indigo-600 to-purple-600
+                hover:from-indigo-500 hover:to-purple-500
+                text-white py-3 rounded-xl font-medium
+                shadow-md hover:shadow-lg transition
+              "
+            >
+              + Post New Job
+            </button>
 
-            <table className="w-full text-left text-sm">
-              <thead className="text-gray-500">
-                <tr>
-                  <th>Name</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-t">
-                  <td>John Doe</td>
-                  <td>UI Designer</td>
-                  <td className="text-indigo-600">Tech Interview</td>
-                </tr>
-                <tr className="border-t">
-                  <td>Ella Clinton</td>
-                  <td>Content Designer</td>
-                  <td className="text-yellow-600">Task</td>
-                </tr>
-                <tr className="border-t">
-                  <td>Mike Tyler</td>
-                  <td>Node.js Developer</td>
-                  <td className="text-green-600">Resume Review</td>
-                </tr>
-              </tbody>
-            </table>
+            <button
+              onClick={() => navigate("/company/applicants")}
+              className="
+                bg-white dark:bg-gray-800
+                border border-gray-200 dark:border-gray-700
+                text-gray-800 dark:text-white
+                py-3 rounded-xl font-medium
+                shadow-sm hover:shadow-md transition
+              "
+            >
+              View Applicants
+            </button>
+
+            <button
+              onClick={() => navigate("/company/interviews")}
+              className="
+                bg-white dark:bg-gray-800
+                border border-gray-200 dark:border-gray-700
+                text-gray-800 dark:text-white
+                py-3 rounded-xl font-medium
+                shadow-sm hover:shadow-md transition
+              "
+            >
+              Schedule Interview
+            </button>
           </div>
-
-          {/* Applicants */}
-          <Applicants />
         </div>
+
+        {/* Activity Section */}
+        <div
+          className="
+            bg-white dark:bg-gray-900
+            border border-gray-200 dark:border-gray-800
+            rounded-2xl p-10 text-center
+            shadow-sm
+          "
+        >
+          <p className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+            No recent activity
+          </p>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            New applications, interviews, and insights will appear here.
+          </p>
+        </div>
+
       </div>
-    </div>
+    </CompanyLayout>
   );
 }
