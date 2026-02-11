@@ -18,7 +18,8 @@
 }
 
 .dashboard-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
 }
 
 /* Stat animation */
@@ -27,37 +28,48 @@
 }
 
 /* ===============================
-   FORCE DARK MODE (IMPORTANT)
+   DARK MODE
    =============================== */
 
-/* Background + text */
 .dark .dashboard-root {
-  background-color: #0f172a; /* slate-900 */
-  color: #e5e7eb; /* slate-200 */
+  background-color: #0f172a;
+  color: #e5e7eb;
 }
 
-/* Cards in dark mode */
 .dark .dashboard-card {
-  background-color: #020617; /* slate-950 */
-  border: 1px solid #1e293b; /* slate-800 */
+  background-color: #020617;
+  border: 1px solid #1e293b;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
 }
 
-/* Headings */
 .dark h1,
 .dark h2,
 .dark h3 {
-  color: #f8fafc; /* slate-50 */
+  color: #f8fafc;
 }
 
-/* Muted text */
 .dark .text-muted-foreground {
-  color: #94a3b8 !important; /* slate-400 */
+  color: #94a3b8 !important;
 }
 
-/* Buttons */
-.dark button {
-  transition: background-color 0.3s ease, color 0.3s ease;
+.dark .dashboard-card {
+  color: #e5e7eb;
+}
+
+.dark .dashboard-card h1,
+.dark .dashboard-card h2,
+.dark .dashboard-card h3,
+.dark .dashboard-card h4 {
+  color: #f8fafc;
+}
+
+.dark .dashboard-card p,
+.dark .dashboard-card li {
+  color: #cbd5e1;
+}
+
+.dark .dashboard-card .text-muted-foreground {
+  color: #94a3b8 !important;
 }
 
 /* ===============================
@@ -95,32 +107,4 @@
     transform: scale(1);
     opacity: 1;
   }
-}
-
-/* ===============================
-   FIX TEXT VISIBILITY IN DARK MODE
-   =============================== */
-
-/* Force readable text inside cards */
-.dark .dashboard-card {
-  color: #e5e7eb; /* slate-200 */
-}
-
-/* Card titles */
-.dark .dashboard-card h1,
-.dark .dashboard-card h2,
-.dark .dashboard-card h3,
-.dark .dashboard-card h4 {
-  color: #f8fafc; /* slate-50 */
-}
-
-/* Normal paragraph text */
-.dark .dashboard-card p,
-.dark .dashboard-card li {
-  color: #cbd5f5; /* slate-300 */
-}
-
-/* Muted text (overrides shadcn muted color) */
-.dark .dashboard-card .text-muted-foreground {
-  color: #94a3b8 !important; /* slate-400 */
 }
