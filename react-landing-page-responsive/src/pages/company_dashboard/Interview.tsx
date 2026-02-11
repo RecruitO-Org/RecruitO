@@ -1,10 +1,11 @@
 import { useState } from "react";
 import InterviewDetails from "./InterviewDetails";
-import { Interview } from "./interview";
+import { Interview } from "./intervieww";
+
 import CompanyLayout from "./CompanyLayout";
 
 export default function Interviews() {
-  const [selected, setSelected] = useState<Interview | null>(null);
+  const [selected, setSelected] = useState<Interview| null>(null);
 
   const interviews: Interview[] = [
     {
@@ -15,6 +16,7 @@ export default function Interviews() {
       status: "Completed",
       integrityWarnings: 1,
       videoUrl: "/sample-video.mp4",
+      aiScore: 8,
     },
     {
       id: "2",
@@ -23,13 +25,15 @@ export default function Interviews() {
       scheduledDate: "10 Feb 2026",
       status: "Flagged",
       integrityWarnings: 4,
+      aiScore: 6,
     },
   ];
 
   return (
     <CompanyLayout>
       <div className="p-6">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-8">
+
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
           Interview Management
         </h1>
 
@@ -38,15 +42,13 @@ export default function Interviews() {
             <div
               key={interview.id}
               className="
-                bg-white/80 dark:bg-gray-900/70
-                backdrop-blur-lg
+                bg-white dark:bg-gray-900
                 border border-gray-200 dark:border-gray-800
                 rounded-2xl p-6
                 transition-all duration-300
                 hover:shadow-xl hover:scale-[1.02]
               "
             >
-              {/* Header */}
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -60,28 +62,26 @@ export default function Interviews() {
                 <span
                   className={`px-3 py-1 text-xs rounded-full font-medium ${
                     interview.status === "Completed"
-                      ? "bg-green-500/10 text-green-400"
+                      ? "bg-green-500/10 text-green-500"
                       : interview.status === "Flagged"
-                      ? "bg-red-500/10 text-red-400"
-                      : "bg-yellow-500/10 text-yellow-400"
+                      ? "bg-red-500/10 text-red-500"
+                      : "bg-yellow-500/10 text-yellow-500"
                   }`}
                 >
                   {interview.status}
                 </span>
               </div>
 
-              {/* Info Section */}
               <div className="mt-6 space-y-4 text-sm">
                 <div className="flex items-center gap-3 text-gray-500 dark:text-gray-300">
-                  <span className="text-base">📅</span>
-                  <span>{interview.scheduledDate}</span>
+                  📅 {interview.scheduledDate}
                 </div>
 
                 <div
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium w-fit ${
+                  className={`px-3 py-2 rounded-lg text-xs font-medium w-fit ${
                     interview.integrityWarnings > 2
-                      ? "bg-red-500/10 text-red-400"
-                      : "bg-yellow-500/10 text-yellow-400"
+                      ? "bg-red-500/10 text-red-500"
+                      : "bg-yellow-500/10 text-yellow-500"
                   }`}
                 >
                   ⚠ {interview.integrityWarnings} Warning
@@ -89,17 +89,13 @@ export default function Interviews() {
                 </div>
               </div>
 
-              {/* Button */}
               <button
                 onClick={() => setSelected(interview)}
                 className="
                   mt-6 w-full
-                  bg-gradient-to-r from-indigo-600 to-purple-600
-                  hover:from-indigo-500 hover:to-purple-500
+                  bg-indigo-600 hover:bg-indigo-700
                   text-white py-2.5 rounded-xl
-                  font-medium
-                  transition-all duration-300
-                  shadow-md hover:shadow-lg
+                  font-medium transition
                 "
               >
                 View Details
@@ -114,6 +110,7 @@ export default function Interviews() {
             onClose={() => setSelected(null)}
           />
         )}
+
       </div>
     </CompanyLayout>
   );

@@ -8,7 +8,7 @@ type TabType =
   | "Notifications"
   | "Security";
 
-export default function Settings(): JSX.Element {
+export default function Setting (): JSX.Element {
   const [activeTab, setActiveTab] = useState<TabType>("Interview");
 
   return (

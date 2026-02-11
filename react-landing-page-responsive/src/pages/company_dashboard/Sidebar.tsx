@@ -69,15 +69,15 @@ export default function Sidebar() {
         <Item
           icon={<Video size={18} />}
           label="Interviews"
-          active={location.pathname === "/company/interviews"}
-          onClick={() => navigate("/company/interviews")}
+          active={location.pathname === "/company/interview"}
+          onClick={() => navigate("/company/interview")}
         />
 
         <Item
           icon={<Settings size={18} />}
           label="Settings"
-          active={location.pathname === "/company/settings"}
-          onClick={() => navigate("/company/settings")}
+          active={location.pathname === "/company/setting"}
+          onClick={() => navigate("/company/setting")}
         />
       </nav>
 

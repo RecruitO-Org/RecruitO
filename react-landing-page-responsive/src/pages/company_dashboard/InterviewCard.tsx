@@ -1,4 +1,5 @@
-import { Interview } from "./interview";
+import { Interview } from "./intervieww";
+
 
 interface Props {
   interview: Interview;

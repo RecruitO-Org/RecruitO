@@ -3,8 +3,8 @@ export interface Interview {
   candidateName: string;
   jobTitle: string;
   scheduledDate: string;
-  status: "Not Started" | "In Progress" | "Completed" | "Flagged";
-  aiScore?: number;
+  status: string;
   integrityWarnings: number;
   videoUrl?: string;
+  aiScore?: number;
 }
