@@ -23,19 +23,22 @@ export const Numbers = () => {
   return (
     <section className="relative mt-20 md:mt-28">
       <Container>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-14 text-left">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12 md:gap-14 text-left">
           {features.map((item, i) => (
-            <div key={i} className="space-y-4">
-              {/* title */}
-              <h3 className="text-lg sm:text-xl font-semibold text-white leading-snug">
+            <div
+              key={i}
+              className="group space-y-4 transition-all duration-300 hover:-translate-y-1"
+            >
+              {/* Title */}
+              <h3 className="text-lg sm:text-xl font-semibold text-zinc-900 dark:text-white leading-snug">
                 {item.title}
               </h3>
 
-              {/* subtle divider */}
-              <div className="h-[2px] w-12 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full" />
+              {/* Divider */}
+              <div className="h-[2px] w-12 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full transition-all duration-300 group-hover:w-20" />
 
-              {/* description */}
-              <p className="text-sm sm:text-base text-zinc-400 leading-relaxed">
+              {/* Description */}
+              <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 leading-relaxed">
                 {item.desc}
               </p>
             </div>
