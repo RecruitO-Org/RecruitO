@@ -4,21 +4,6 @@ import Landing from "./pages/landing/Landing";
 import SignIn from "./pages/auth/SignIn";
 import Signup from "./pages/auth/Signup";
 
-/* ================= COMPANY DASHBOARD ================= */
-
-import CompanyDashboard from "./pages/company_dashboard/CompanyDashboard";
-import Applicants from "./pages/company_dashboard/Applicants";
-import ApplicantDetail from "./pages/company_dashboard/ApplicantDetail";
-import JobPostings from "./pages/company_dashboard/JobPostings";
-import JobDetail from "./pages/company_dashboard/JobDetail";
-import CompanyProfile from "./pages/company_dashboard/CompanyProfile";
-import Analytics from "./pages/company_dashboard/Analytics";
-import Interview from "./pages/company_dashboard/Interview";
-import Setting from "./pages/company_dashboard/Settings_company";
-import { JobsProvider } from "./pages/company_dashboard/JobsContext";
-
-/* ================= USER DASHBOARD ================= */
-
 import DashboardLayout from "./pages/user_dashboard/DashboardLayout";
 import DashboardHome from "./pages/user_dashboard/DashboardHome";
 import Profile from "./pages/user_dashboard/Profile";
@@ -29,41 +14,47 @@ import AIChatbot from "./pages/user_dashboard/AIChatbot";
 import Settings from "./pages/user_dashboard/Settings";
 import Interviews from "./pages/user_dashboard/Interviews";
 
+import CompanyDashboard from "./pages/company_dashboard/CompanyDashboard";
+
+import AdminLayout from "./pages/admin_dashboard/AdminLayout";
+import AdminHome from "./pages/admin_dashboard/AdminHome";
+import ManageUsers from "./pages/admin_dashboard/ManageUsers";
+import ManageCompanies from "./pages/admin_dashboard/ManageCompanies";
+import ManageJobs from "./pages/admin_dashboard/ManageJobs";
+import Reports from "./pages/admin_dashboard/Reports";
+
 function App() {
   return (
-    <JobsProvider>
-      <Routes>
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<Landing />} />
+      <Route path="/signin" element={<SignIn />} />
+      <Route path="/signup" element={<Signup />} />
 
-        {/* Public Routes */}
-        <Route path="/" element={<Landing />} />
-        <Route path="/signin" element={<SignIn />} />
-        <Route path="/signup" element={<Signup />} />
+      {/* User Dashboard */}
+      <Route path="/dashboard" element={<DashboardLayout />}>
+        <Route index element={<DashboardHome />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="jobs" element={<Jobs />} />
+        <Route path="internships" element={<Internships />} />
+        <Route path="resume" element={<Resume />} />
+        <Route path="chatbot" element={<AIChatbot />} />
+        <Route path="settings" element={<Settings />} />
+        <Route path="interview" element={<Interviews />} />
+      </Route>
 
-        {/* ================= COMPANY ROUTES ================= */}
-        <Route path="/company/dashboard" element={<CompanyDashboard />} />
-        <Route path="/company/applicants" element={<Applicants />} />
-        <Route path="/company/applicants/:id" element={<ApplicantDetail />} />
-        <Route path="/company/job-postings" element={<JobPostings />} />
-        <Route path="/company/job-postings/:id" element={<JobDetail />} />
-        <Route path="/company/profile" element={<CompanyProfile />} />
-        <Route path="/company/analytics" element={<Analytics />} />
-        <Route path="/company/interview" element={<Interview />} />
-        <Route path="/company/setting" element={<Setting />} />
+      {/* Company Dashboard */}
+      <Route path="/company/dashboard" element={<CompanyDashboard />} />
 
-        {/* ================= USER DASHBOARD (Nested) ================= */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<DashboardHome />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="jobs" element={<Jobs />} />
-          <Route path="internships" element={<Internships />} />
-          <Route path="resume" element={<Resume />} />
-          <Route path="chatbot" element={<AIChatbot />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="interview" element={<Interviews />} />
-        </Route>
-
-      </Routes>
-    </JobsProvider>
+      {/* Admin Dashboard */}
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<AdminHome />} />
+        <Route path="users" element={<ManageUsers />} />
+        <Route path="companies" element={<ManageCompanies />} />
+        <Route path="jobs" element={<ManageJobs />} />
+        <Route path="reports" element={<Reports />} />
+      </Route>
+    </Routes>
   );
 }
 
