@@ -1,4 +1,3 @@
-import { Button } from "../shared/Button";
 import { Container } from "../shared/Container";
 import { Paragraph } from "../shared/Paragraph";
 
@@ -23,9 +22,7 @@ export const CTA = () => {
               skill-based assessments, and secure online interviews.
 
             </Paragraph>
-            <div className="mx-auto max-w-md sm:max-w-xl pt-10 dark:text-white">
-              <Button> Get Started </Button>
-            </div>
+            
           </div>
         </div>
       </Container>

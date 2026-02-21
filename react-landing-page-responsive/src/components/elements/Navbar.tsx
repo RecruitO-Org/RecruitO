@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Container } from "../shared/Container";
 import logo from "/assets/icon.svg";
 import { NavItem } from "../shared/NavItem";
@@ -13,6 +14,7 @@ export const navItems = [
 
 export const Navbar = () => {
   const { toggleTheme, theme } = useThemeStore();
+  const [activeAuth, setActiveAuth] = useState<"signin" | "signup">("signup");
 
   return (
     <motion.header
@@ -21,85 +23,83 @@ export const Navbar = () => {
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="
         fixed inset-x-0 top-0 z-50
-        backdrop-blur-md bg-black/60
-        border-b border-white/10
+        bg-white dark:bg-black
+        border-b border-zinc-200 dark:border-zinc-800
+        transition-colors duration-500
       "
     >
       <Container>
-        <nav className="w-full flex justify-between gap-6 relative py-4">
+        <nav className="w-full flex items-center justify-between py-4">
 
           {/* LOGO */}
-          <div className="min-w-max inline-flex relative">
-            <a href="/" className="flex items-center gap-3 group">
-              <img
-                src={logo}
-                alt="RecruitO Logo"
-                className="w-10 h-10 transition-transform duration-300
-                           group-hover:rotate-6 group-hover:scale-110"
-              />
-              <span className="text-lg font-semibold text-heading-1">
-                RecruitO
-              </span>
-            </a>
-          </div>
+          <a href="/" className="flex items-center gap-3 group">
+            <img
+              src={logo}
+              alt="RecruitO Logo"
+              className="w-10 h-10 transition-transform duration-300
+                         group-hover:rotate-6 group-hover:scale-110"
+            />
+            <span className="text-lg font-semibold text-zinc-900 dark:text-white">
+              RecruitO
+            </span>
+          </a>
 
           {/* NAV LINKS */}
-          <div
-            className="
-              flex flex-col lg:flex-row w-full lg:justify-between lg:items-center
-              absolute top-full left-0 lg:static
-              bg-body/95 lg:bg-transparent
-              border-x border-box-border lg:border-0
-              lg:h-auto h-0 overflow-hidden
-            "
-          >
-            <ul
-              className="
-                border-t border-box-border lg:border-0
-                px-6 lg:px-0 pt-6 lg:pt-0
-                flex flex-col lg:flex-row
-                gap-y-4 gap-x-6
-                text-lg text-heading-2
-                w-full lg:justify-center lg:items-center
-              "
-            >
-              {navItems.map((item, key) => (
-                <li
-                  key={key}
-                  className="
-                    relative group
-                    after:content-['']
-                    after:absolute after:left-0 after:-bottom-1
-                    after:h-[2px] after:w-0
-                    after:bg-violet-500
-                    after:transition-all after:duration-300
-                    hover:after:w-full
-                  "
-                >
-                  <NavItem href={item.href} text={item.text} />
-                </li>
-              ))}
-            </ul>
+          <ul className="hidden lg:flex items-center gap-8 text-lg text-zinc-700 dark:text-zinc-300">
+            {navItems.map((item, key) => (
+              <li
+                key={key}
+                className="
+                  relative group
+                  after:content-['']
+                  after:absolute after:left-0 after:-bottom-1
+                  after:h-[2px] after:w-0
+                  after:bg-violet-500
+                  after:transition-all after:duration-300
+                  hover:after:w-full
+                "
+              >
+                <NavItem href={item.href} text={item.text} />
+              </li>
+            ))}
+          </ul>
 
-            {/* AUTH BUTTONS */}
+          {/* RIGHT SIDE */}
+          <div className="flex items-center gap-4">
+
+            {/* AUTH TOGGLE */}
             <div
+              onMouseLeave={() => setActiveAuth("signup")}
               className="
-                lg:min-w-max flex items-center gap-3
-                sm:w-max w-full
-                pb-6 lg:pb-0
-                border-b border-box-border lg:border-0
-                px-6 lg:px-0
+                relative flex items-center
+                bg-zinc-100 dark:bg-zinc-800
+                rounded-full p-1
+                w-44
               "
             >
+              {/* Sliding Background */}
+              <div
+                className={`
+                  absolute top-1 bottom-1 w-1/2 rounded-full
+                  bg-gradient-to-r from-violet-600 to-blue-600
+                  transition-all duration-300 ease-in-out
+                  ${activeAuth === "signin" ? "left-1" : "left-1/2"}
+                `}
+              />
+
               {/* Sign In */}
               <a
                 href="/signin"
-                className="
-                  text-sm font-medium
-                  text-zinc-300
-                  hover:text-white
+                onMouseEnter={() => setActiveAuth("signin")}
+                className={`
+                  relative z-10 w-1/2 text-center py-2 text-sm font-medium
                   transition-colors duration-300
-                "
+                  ${
+                    activeAuth === "signin"
+                      ? "text-white"
+                      : "text-zinc-700 dark:text-zinc-300"
+                  }
+                `}
               >
                 Sign In
               </a>
@@ -107,43 +107,43 @@ export const Navbar = () => {
               {/* Sign Up */}
               <a
                 href="/signup"
-                className="
-                  text-sm font-semibold text-white
-                  px-5 py-2 rounded-full
-                  bg-gradient-to-r from-violet-600 to-blue-600
-                  shadow-lg shadow-violet-600/30
-                  transition-all duration-300
-                  hover:scale-105 hover:shadow-violet-600/50
-                  active:scale-95
-                "
+                onMouseEnter={() => setActiveAuth("signup")}
+                className={`
+                  relative z-10 w-1/2 text-center py-2 text-sm font-medium
+                  transition-colors duration-300
+                  ${
+                    activeAuth === "signup"
+                      ? "text-white"
+                      : "text-zinc-700 dark:text-zinc-300"
+                  }
+                `}
               >
                 Sign Up
               </a>
             </div>
-          </div>
 
-          {/* THEME TOGGLE */}
-          <div className="min-w-max flex items-center gap-x-3">
+            {/* THEME TOGGLE */}
             <button
               onClick={toggleTheme}
               className="
-                rounded-full p-2 lg:p-3
-                border border-white/20
-                bg-white/5 text-white
+                rounded-full p-2
+                border border-zinc-300 dark:border-white/20
+                bg-zinc-100 dark:bg-zinc-800
+                text-zinc-800 dark:text-white
                 transition-all duration-300
-                hover:bg-white/15 hover:rotate-12
+                hover:bg-zinc-200 dark:hover:bg-zinc-700
+                hover:rotate-12
                 active:scale-95
               "
             >
               {theme === "dark" ? (
-                /* Moon */
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
                   strokeWidth="1.5"
                   stroke="currentColor"
-                  className="w-6 h-6 text-white"
+                  className="w-6 h-6"
                 >
                   <path
                     strokeLinecap="round"
@@ -157,14 +157,13 @@ export const Navbar = () => {
                   />
                 </svg>
               ) : (
-                /* Sun */
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
                   strokeWidth="1.5"
                   stroke="currentColor"
-                  className="w-6 h-6 text-white"
+                  className="w-6 h-6"
                 >
                   <path
                     strokeLinecap="round"
@@ -179,6 +178,7 @@ export const Navbar = () => {
                 </svg>
               )}
             </button>
+
           </div>
 
         </nav>
@@ -186,3 +186,4 @@ export const Navbar = () => {
     </motion.header>
   );
 };
+

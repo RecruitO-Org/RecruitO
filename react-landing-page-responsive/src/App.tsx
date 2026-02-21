@@ -16,7 +16,6 @@ import Interviews from "./pages/user_dashboard/Interviews";
 
 import CompanyDashboard from "./pages/company_dashboard/CompanyDashboard";
 
-// 🔥 ADMIN IMPORTS
 import AdminLayout from "./pages/admin_dashboard/AdminLayout";
 import AdminHome from "./pages/admin_dashboard/AdminHome";
 import ManageUsers from "./pages/admin_dashboard/ManageUsers";
@@ -32,7 +31,7 @@ function App() {
       <Route path="/signin" element={<SignIn />} />
       <Route path="/signup" element={<Signup />} />
 
-      {/* ================= USER DASHBOARD ================= */}
+      {/* User Dashboard */}
       <Route path="/dashboard" element={<DashboardLayout />}>
         <Route index element={<DashboardHome />} />
         <Route path="profile" element={<Profile />} />
@@ -44,10 +43,10 @@ function App() {
         <Route path="interview" element={<Interviews />} />
       </Route>
 
-      {/* ================= COMPANY DASHBOARD ================= */}
+      {/* Company Dashboard */}
       <Route path="/company/dashboard" element={<CompanyDashboard />} />
 
-      {/* ================= ADMIN DASHBOARD ================= */}
+      {/* Admin Dashboard */}
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminHome />} />
         <Route path="users" element={<ManageUsers />} />
