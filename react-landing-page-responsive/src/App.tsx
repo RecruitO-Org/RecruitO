@@ -16,6 +16,14 @@ import Interviews from "./pages/user_dashboard/Interviews";
 
 import CompanyDashboard from "./pages/company_dashboard/CompanyDashboard";
 
+// 🔥 ADMIN IMPORTS
+import AdminLayout from "./pages/admin_dashboard/AdminLayout";
+import AdminHome from "./pages/admin_dashboard/AdminHome";
+import ManageUsers from "./pages/admin_dashboard/ManageUsers";
+import ManageCompanies from "./pages/admin_dashboard/ManageCompanies";
+import ManageJobs from "./pages/admin_dashboard/ManageJobs";
+import Reports from "./pages/admin_dashboard/Reports";
+
 function App() {
   return (
     <Routes>
@@ -24,7 +32,7 @@ function App() {
       <Route path="/signin" element={<SignIn />} />
       <Route path="/signup" element={<Signup />} />
 
-      {/* User Dashboard (Nested Properly) */}
+      {/* ================= USER DASHBOARD ================= */}
       <Route path="/dashboard" element={<DashboardLayout />}>
         <Route index element={<DashboardHome />} />
         <Route path="profile" element={<Profile />} />
@@ -36,8 +44,17 @@ function App() {
         <Route path="interview" element={<Interviews />} />
       </Route>
 
-      {/* Company Dashboard */}
+      {/* ================= COMPANY DASHBOARD ================= */}
       <Route path="/company/dashboard" element={<CompanyDashboard />} />
+
+      {/* ================= ADMIN DASHBOARD ================= */}
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<AdminHome />} />
+        <Route path="users" element={<ManageUsers />} />
+        <Route path="companies" element={<ManageCompanies />} />
+        <Route path="jobs" element={<ManageJobs />} />
+        <Route path="reports" element={<Reports />} />
+      </Route>
     </Routes>
   );
 }
