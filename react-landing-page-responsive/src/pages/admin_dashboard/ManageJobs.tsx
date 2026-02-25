@@ -1,131 +1,61 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import JobDrawer, { Job } from "./JobDrawer";
 
-export default function ManageJobs(): JSX.Element {
-const jobs: Job[] = [
-{
-title: "Frontend Developer",
-company: "TechNova",
-applications: 42,
-status: "Active",
-description: "Build responsive UI using React and Tailwind.",
-skills: ["React", "TypeScript", "Tailwind"],
-},
-{
-title: "AI Engineer",
-company: "NextGen Labs",
-applications: 18,
-status: "Flagged",
-description: "Develop ML models and deploy APIs.",
-skills: ["Python", "TensorFlow", "FastAPI"],
-},
-{
-title: "Backend Developer",
-company: "ByteCraft",
-applications: 25,
-status: "Closed",
-description: "Create scalable backend services and REST APIs.",
-skills: ["Node.js", "PostgreSQL", "Docker"],
-},
-];
+interface Job {
+  title: string;
+  company: string;
+  applicants: number;
+  status: "Open" | "Closed";
+}
 
-const [selected, setSelected] = useState<Job | null>(null);
+export default function AdminJobs() {
+  const jobs: Job[] = [
+    { title: "Frontend Developer", company: "TechNova", applicants: 34, status: "Open" },
+    { title: "React Developer", company: "CodeCraft", applicants: 21, status: "Open" },
+    { title: "AI Engineer", company: "FutureMind AI", applicants: 12, status: "Closed" },
+  ];
 
-return ( <div className="space-y-8">
+  return (
+    <div className="space-y-8">
 
-  {/* Header */}
-  <div className="flex items-center justify-between">
-    <h1 className="text-3xl font-bold">Manage Jobs</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-semibold">Jobs</h1>
+        <Button>Create Job</Button>
+      </div>
 
-    <input
-      placeholder="Search jobs..."
-      className="px-4 py-2 rounded-xl border border-slate-200 bg-white shadow-sm
-      dark:bg-white/5 dark:border-white/10 outline-none text-sm"
-    />
-  </div>
+      <div className="space-y-4">
 
-  {/* Table */}
-  <div className="rounded-3xl overflow-hidden border
-  bg-white shadow-lg border-slate-200
-  dark:bg-white/5 dark:border-white/10 dark:backdrop-blur-xl">
-
-    <table className="w-full text-sm">
-      <thead className="bg-slate-50 text-slate-500 uppercase text-xs
-      dark:bg-white/10 dark:text-white/60">
-        <tr>
-          <th className="p-4 text-left">Job</th>
-          <th>Company</th>
-          <th>Applications</th>
-          <th>Status</th>
-          <th className="text-right pr-6">Actions</th>
-        </tr>
-      </thead>
-
-      <tbody>
         {jobs.map((job, index) => (
-          <tr
+          <div
             key={index}
-            className="border-t border-slate-200 hover:bg-slate-50
-            dark:border-white/10 dark:hover:bg-white/5 transition"
+            className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition flex justify-between items-center"
           >
-            {/* Job identity */}
-            <td className="p-4 font-medium">{job.title}</td>
+            <div>
+              <h2 className="text-lg font-semibold">{job.title}</h2>
+              <p className="text-white/60">
+                {job.company} • {job.applicants} Applicants
+              </p>
+            </div>
 
-            <td className="opacity-70">{job.company}</td>
-
-            <td>{job.applications}</td>
-
-            {/* Status badge */}
-            <td>
+            <div className="flex items-center gap-4">
               <span
-                className={`px-2 py-1 rounded-full text-xs
-                ${
-                  job.status === "Active"
-                    ? "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300"
-                    : job.status === "Closed"
-                    ? "bg-gray-200 text-gray-700 dark:bg-white/10 dark:text-white/70"
-                    : "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300"
+                className={`px-3 py-1 text-xs rounded-full ${
+                  job.status === "Open"
+                    ? "bg-green-500/20 text-green-400"
+                    : "bg-red-500/20 text-red-400"
                 }`}
               >
                 {job.status}
               </span>
-            </td>
 
-            {/* Actions */}
-            <td className="text-right pr-6 space-x-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setSelected(job)}
-              >
-                View
+              <Button size="sm" variant="outline">
+                Manage
               </Button>
-
-              <Button
-                size="sm"
-                className="bg-orange-500 hover:bg-orange-600 text-white"
-              >
-                Flag
-              </Button>
-
-              <Button
-                size="sm"
-                className="bg-red-500 hover:bg-red-600 text-white"
-              >
-                Delete
-              </Button>
-            </td>
-          </tr>
+            </div>
+          </div>
         ))}
-      </tbody>
-    </table>
-  </div>
 
-  {/* Drawer */}
-  <JobDrawer job={selected} onClose={() => setSelected(null)} />
-</div>
+      </div>
 
-
-);
+    </div>
+  );
 }

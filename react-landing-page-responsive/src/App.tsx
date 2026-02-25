@@ -16,12 +16,18 @@ import Interviews from "./pages/user_dashboard/Interviews";
 
 import CompanyDashboard from "./pages/company_dashboard/CompanyDashboard";
 
+// Admin Imports
 import AdminLayout from "./pages/admin_dashboard/AdminLayout";
 import AdminHome from "./pages/admin_dashboard/AdminHome";
 import ManageUsers from "./pages/admin_dashboard/ManageUsers";
 import ManageCompanies from "./pages/admin_dashboard/ManageCompanies";
 import ManageJobs from "./pages/admin_dashboard/ManageJobs";
+import Applications from "./pages/admin_dashboard/Applications";
+import AdminInterviews from "./pages/admin_dashboard/AdminInterviews";
+import AIInsights from "./pages/admin_dashboard/AIInsights";
 import Reports from "./pages/admin_dashboard/Reports";
+import Notifications from "./pages/admin_dashboard/Notifications";
+import AdminSettings from "./pages/admin_dashboard/AdminSettings";
 
 function App() {
   return (
@@ -52,7 +58,12 @@ function App() {
         <Route path="users" element={<ManageUsers />} />
         <Route path="companies" element={<ManageCompanies />} />
         <Route path="jobs" element={<ManageJobs />} />
+        <Route path="applications" element={<Applications />} />
+        <Route path="interviews" element={<AdminInterviews />} />
+        <Route path="ai-insights" element={<AIInsights />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="notifications" element={<Notifications />} />
+        <Route path="settings" element={<AdminSettings />} />
       </Route>
     </Routes>
   );
