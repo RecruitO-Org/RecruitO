@@ -1,86 +1,78 @@
-import { NavLink, Outlet } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useNavigate, NavLink, Outlet } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-const linkBase =
-"block px-3 py-2 rounded-md text-sm transition";
+export default function AdminLayout() {
+  const navigate = useNavigate();
 
-export default function AdminLayout(): JSX.Element {
-const [dark, setDark] = useState<boolean>(true);
+  const navItems = [
+    { name: "Dashboard", path: "/admin" },
+    { name: "Users", path: "/admin/users" },
+    { name: "Companies", path: "/admin/companies" },
+    { name: "Jobs", path: "/admin/jobs" },
+    { name: "Applications", path: "/admin/applications" },
+    { name: "Interviews", path: "/admin/interviews" },
+    { name: "AI Insights", path: "/admin/ai-insights" },
+    { name: "Reports", path: "/admin/reports" },
+    { name: "Notifications", path: "/admin/notifications" },
+    { name: "Settings", path: "/admin/settings" },
+  ];
 
-useEffect(() => {
-const saved = localStorage.getItem("theme");
-const isDark = saved !== "light";
-setDark(isDark);
-document.documentElement.classList.toggle("dark", isDark);
-}, []);
+  return (
+    <div className="min-h-screen bg-[#0f172a] text-white flex">
 
-const toggleTheme = () => {
-setDark((prev) => {
-const next = !prev;
-document.documentElement.classList.toggle("dark", next);
-localStorage.setItem("theme", next ? "dark" : "light");
-return next;
-});
-};
+      {/* SIDEBAR */}
+      <aside className="w-64 bg-[#0b1120] border-r border-white/10 px-6 py-8 flex flex-col">
 
-return ( <div className="flex min-h-screen transition-colors
- bg-slate-100 text-slate-900
- dark:bg-[#0f172a] dark:text-white">
+        <h2 className="text-xl font-semibold mb-10 tracking-wide">
+          RecruitO Admin
+        </h2>
 
-  {/* Sidebar */}
-  <aside className="w-64 p-6 border-r
-  bg-white border-slate-200
-  dark:bg-black/40 dark:border-white/10">
+        <nav className="space-y-2 flex-1">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.name}
+              to={item.path}
+              end={item.path === "/admin"}
+              className={({ isActive }) =>
+                `block px-4 py-2 rounded-xl transition ${
+                  isActive
+                    ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-md"
+                    : "text-white/70 hover:bg-white/5 hover:text-white"
+                }`
+              }
+            >
+              {item.name}
+            </NavLink>
+          ))}
+        </nav>
 
-    <h2 className="text-xl font-bold mb-6">Admin Panel</h2>
-
-    <nav className="space-y-2">
-      {[
-        "","users","companies","jobs","applications",
-        "interviews","ai-insights","reports","notifications","settings"
-      ].map((path, i) => (
-        <NavLink
-          key={i}
-          to={`/admin${path ? `/${path}` : ""}`}
-          end={!path}
-          className={({ isActive }) =>
-            `${linkBase}
-            ${isActive
-              ? "bg-violet-500 text-white"
-              : "hover:bg-slate-100 dark:hover:bg-white/10"}`
-          }
+        <Button
+          variant="destructive"
+          className="mt-6 rounded-xl"
+          onClick={() => navigate("/signin")}
         >
-          {path || "Dashboard"}
-        </NavLink>
-      ))}
-    </nav>
+          Logout
+        </Button>
+      </aside>
 
-    {/* Toggle */}
-    <div className="mt-10 flex items-center justify-between">
-      <span className="text-sm opacity-70">Theme</span>
+      {/* MAIN AREA */}
+      <div className="flex-1 flex flex-col">
 
-      <button
-        onClick={toggleTheme}
-        className="relative w-14 h-7 rounded-full
-        bg-slate-300 dark:bg-violet-500 transition"
-      >
-        <motion.div
-          layout
-          className="absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow"
-          animate={{ x: dark ? 26 : 0 }}
-          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-        />
-      </button>
+        <div className="flex justify-between items-center px-10 py-6 border-b border-white/10 bg-[#111827]">
+          <h1 className="text-2xl font-semibold">
+            Admin Dashboard
+          </h1>
+
+          <Avatar className="cursor-pointer hover:scale-105 transition">
+            <AvatarFallback>AD</AvatarFallback>
+          </Avatar>
+        </div>
+
+        <div className="flex-1 px-10 py-10 bg-gradient-to-b from-[#111827] to-[#0f172a]">
+          <Outlet />
+        </div>
+      </div>
     </div>
-  </aside>
-
-  {/* Content */}
-  <main className="flex-1 p-10">
-    <Outlet />
-  </main>
-</div>
-
-
-);
+  );
 }
