@@ -2,11 +2,11 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
-type Role = "candidate" | "company";
+type Role = "user" | "company";
 
 export default function Signup() {
   const navigate = useNavigate();
-  const [role, setRole] = useState<Role>("candidate");
+  const [role, setRole] = useState<Role>("user");
 
   // Common
   const [email, setEmail] = useState("");
@@ -30,47 +30,78 @@ export default function Signup() {
     return /@(gmail|yahoo|outlook|hotmail)\.com$/i.test(email);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError("");
 
-    if (!email || !phone || !password || !confirmPassword) {
-      setError("All required fields must be filled");
+  if (!email || !phone || !password || !confirmPassword) {
+    setError("All required fields must be filled");
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    setError("Passwords do not match");
+    return;
+  }
+
+  if (password.length < 6) {
+    setError("Password must be at least 6 characters");
+    return;
+  }
+
+  if (role === "user") {
+    if (!fullName || !otp) {
+      setError("Please complete all candidate fields");
+      return;
+    }
+  }
+
+  if (role === "company") {
+    if (!companyName || !website || !registrationNumber || !industry) {
+      setError("All company fields are required");
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
+    if (isFreeEmail(email)) {
+      setError("Use official company email (no Gmail/Yahoo)");
+      return;
+    }
+  }
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: role === "user" ? fullName : companyName,
+        email: email,
+        password: password,
+        role: role,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setError(data.detail || "Signup failed");
       return;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
+    console.log("Signup success:", data);
+
+    // Navigate after success
+    if (role === "user") {
+      navigate("/dashboard");
+    } else {
+      navigate("/company/dashboard");
     }
 
-    if (role === "candidate") {
-      if (!fullName || !otp) {
-        setError("Please complete all candidate fields");
-        return;
-      }
-
-      navigate("/candidate-dashboard");
-    }
-
-    if (role === "company") {
-      if (!companyName || !website || !registrationNumber || !industry) {
-        setError("All company fields are required");
-        return;
-      }
-
-      if (isFreeEmail(email)) {
-        setError("Use official company email (no Gmail/Yahoo)");
-        return;
-      }
-
-      navigate("/company-dashboard");
-    }
-  };
+  } catch (error) {
+    setError("Server error. Please try again.");
+  }
+};
 
   return (
     <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#0a0f1f] px-4">
@@ -93,15 +124,15 @@ export default function Signup() {
               transition={{ type: "spring", stiffness: 500, damping: 30 }}
               className="absolute top-1 bottom-1 w-1/2 rounded-full bg-gradient-to-r from-violet-600 to-blue-600"
               style={{
-                left: role === "candidate" ? "4px" : "50%",
+                left: role === "user" ? "4px" : "50%",
               }}
             />
 
             <button
               type="button"
-              onClick={() => setRole("candidate")}
+              onClick={() => setRole("user")}
               className={`relative z-10 w-1/2 py-2 text-sm font-medium transition-colors ${
-                role === "candidate" ? "text-white" : "text-white/70"
+                role === "user" ? "text-white" : "text-white/70"
               }`}
             >
               Candidate
@@ -121,7 +152,7 @@ export default function Signup() {
 
         <form onSubmit={handleSubmit} className="mt-10 space-y-6 relative overflow-hidden">
           <AnimatePresence mode="wait">
-            {role === "candidate" && (
+            {role === "user" && (
               <motion.div
                 key="candidate"
                 initial={{ opacity: 0, x: -40 }}
