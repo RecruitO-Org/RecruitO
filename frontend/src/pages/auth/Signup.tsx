@@ -79,6 +79,7 @@ export default function Signup() {
         email: email,
         password: password,
         role: role,
+        otp: otp,
       }),
     });
 
@@ -177,11 +178,38 @@ export default function Signup() {
                     className="flex-1 inputStyle"
                   />
                   <button
-                    type="button"
-                    className="px-4 rounded-xl bg-violet-600 text-white text-sm hover:scale-105 transition"
-                  >
-                    Send OTP
-                  </button>
+  type="button"
+  onClick={async () => {
+    if (!email) {
+      setError("Enter email first");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/send-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.detail || "Failed to send OTP");
+        return;
+      }
+
+      alert("OTP sent! Check backend terminal for now.");
+    } catch (error) {
+      setError("Server error while sending OTP");
+    }
+  }}
+  className="px-4 rounded-xl bg-violet-600 text-white text-sm hover:scale-105 transition"
+>
+  Send OTP
+</button>
                 </div>
 
                 <input
