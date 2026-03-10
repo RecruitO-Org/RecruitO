@@ -6,6 +6,7 @@ import smtplib
 import os
 from email.mime.text import MIMEText
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 
 from app.database import SessionLocal
 from app import models
@@ -80,22 +81,53 @@ def send_email_otp(receiver_email: str, otp: str):
 @router.post("/send-otp")
 def send_otp(request: SendOTPRequest, db: Session = Depends(get_db)):
 
+    # Delete previous OTPs for this email
+    db.query(EmailOTP).filter(EmailOTP.email == request.email).delete()
+
     # Generate 6-digit OTP
     otp = str(random.randint(100000, 999999))
 
-    # Save OTP to database
+    # Save OTP
     otp_entry = EmailOTP(
         email=request.email,
-        otp=otp
+        otp=otp,
+        created_at=datetime.utcnow()
     )
 
     db.add(otp_entry)
     db.commit()
 
-    # Send OTP via email
+    # Send email
     send_email_otp(request.email, otp)
 
     return {"message": "OTP sent successfully"}
+
+
+# ----------------------------
+# Resend OTP Route
+# ----------------------------
+
+@router.post("/resend-otp")
+def resend_otp(request: SendOTPRequest, db: Session = Depends(get_db)):
+
+    # Remove old OTPs
+    db.query(EmailOTP).filter(EmailOTP.email == request.email).delete()
+
+    # Generate new OTP
+    otp = str(random.randint(100000, 999999))
+
+    otp_entry = EmailOTP(
+        email=request.email,
+        otp=otp,
+        created_at=datetime.utcnow()
+    )
+
+    db.add(otp_entry)
+    db.commit()
+
+    send_email_otp(request.email, otp)
+
+    return {"message": "New OTP sent successfully"}
 
 
 # ----------------------------
@@ -116,7 +148,7 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
             detail="Email already registered"
         )
 
-    # Verify OTP (latest OTP)
+    # Get OTP record
     otp_record = db.query(EmailOTP).filter(
         EmailOTP.email == user.email,
         EmailOTP.otp == user.otp
@@ -126,6 +158,17 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=400,
             detail="Invalid OTP"
+        )
+
+    # Check OTP expiry (5 minutes)
+    if datetime.utcnow() - otp_record.created_at > timedelta(minutes=5):
+
+        db.delete(otp_record)
+        db.commit()
+
+        raise HTTPException(
+            status_code=400,
+            detail="OTP expired. Please request a new OTP."
         )
 
     # Hash password
@@ -147,7 +190,7 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
 
     db.add(new_user)
 
-    # Delete used OTP
+    # Delete OTP after successful use
     db.delete(otp_record)
 
     db.commit()
