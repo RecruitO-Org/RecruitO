@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/AuthStore";
+import { api } from "../../lib/api";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
@@ -13,35 +14,22 @@ const SignIn = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Validation
     if (!email || !password) {
       setError("Email and password are required");
       return;
     }
 
-    // Clear error
     setError("");
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const data = await api.post<{
+        access_token: string;
+        role: string;
+        name: string;
+      }>("/login", { email, password });
 
-      const data = await response.json();
+      login(data.access_token, data.role as "admin" | "company" | "user", data.name, email);
 
-      if (!response.ok) {
-        setError(data.detail || "Invalid email or password");
-        return;
-      }
-
-      // Store in Zustand AuthStore
-      login(data.access_token, data.role, data.name, email);
-
-      // Redirect based on role
       if (data.role === "admin") {
         navigate("/admin");
       } else if (data.role === "company") {
@@ -49,11 +37,14 @@ const SignIn = () => {
       } else {
         navigate("/dashboard");
       }
-    } catch {
-      setError("Failed to connect to the login server. Please make sure the backend is running.");
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Failed to connect to the login server. Please make sure the backend is running."
+      );
     }
   };
-
 
   return (
     <div
@@ -150,7 +141,7 @@ const SignIn = () => {
 
         {/* Signup link */}
         <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-          Don’t have an account?{" "}
+          Don't have an account?{" "}
           <Link
             to="/signup"
             className="text-purple-600 dark:text-purple-400 font-medium hover:underline"

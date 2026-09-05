@@ -1,3 +1,4 @@
+import os
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
 # pyrefly: ignore [missing-import]
@@ -6,21 +7,20 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, HTTPException, status
 # pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session
-from app.database import SessionLocal
+from app.deps import get_db
 from app import models
 
-SECRET_KEY = "supersecretkey"
+from app.config import load_env
+
+load_env()
+
+# SECRET_KEY is loaded from the environment. A demo fallback is provided so a
+# fresh checkout can run, but production MUST set a strong SECRET_KEY in .env.
+SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -45,6 +45,11 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     user = db.query(models.User).filter(models.User.email == email).first()
     if user is None:
         raise credentials_exception
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is suspended. Contact support.",
+        )
     return user
 
 class RoleChecker:

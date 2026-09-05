@@ -6,22 +6,39 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr
 import random
 import smtplib
+import logging
 import os
 from email.mime.text import MIMEText
-# pyrefly: ignore [missing-import]
-from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
-from app.database import SessionLocal
-from app import models
+from app.deps import get_db
+from app import models, schemas
 from app.utils import hash_password, verify_password
 from app.models import RoleEnum, EmailOTP
 from app.auth import create_access_token, get_current_user, RoleChecker
+from app.config import load_env
 
-# Load .env variables
-load_dotenv()
+# Load .env variables (anchored to the project root)
+load_env()
+
+logger = logging.getLogger("recruito.auth")
+
+# Gmail SMTP defaults, overridable via .env for other providers.
+SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+
+# TEMPORARY: bypass email OTP verification during signup so users can register
+# and log in without an SMTP service. The OTP code below is fully intact and is
+# only skipped when this is enabled. To re-enable email verification, set
+# BYPASS_EMAIL_OTP=false in .env (or flip this default back to False).
+BYPASS_EMAIL_OTP = os.getenv("BYPASS_EMAIL_OTP", "true").strip().lower() in ("1", "true", "yes", "on")
 
 router = APIRouter()
+
+# Roles a user is allowed to self-register as.
+# Admin accounts are NEVER created via the public signup endpoint;
+# they are provisioned only through the admin seeder (seed_admin.py).
+ALLOWED_SIGNUP_ROLES = {RoleEnum.user, RoleEnum.company}
 
 
 # ----------------------------
@@ -38,24 +55,12 @@ class UserCreate(BaseModel):
     password: str
     role: RoleEnum
     otp: str = ""
+    phone: str | None = None
 
 
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
-
-
-
-# ----------------------------
-# Database Dependency
-# ----------------------------
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 # ----------------------------
@@ -66,6 +71,15 @@ def send_email_otp(receiver_email: str, otp: str):
     sender_email = os.getenv("EMAIL_ADDRESS")
     sender_password = os.getenv("EMAIL_PASSWORD")
 
+    if not sender_email or not sender_password:
+        logger.error(
+            "OTP email failed: EMAIL_ADDRESS or EMAIL_PASSWORD is not set in .env"
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Email service is not configured. Please set EMAIL_ADDRESS and EMAIL_PASSWORD in .env",
+        )
+
     subject = "RecruitO OTP Verification"
     body = f"Your OTP for RecruitO signup is: {otp}"
 
@@ -74,15 +88,53 @@ def send_email_otp(receiver_email: str, otp: str):
     msg["From"] = sender_email
     msg["To"] = receiver_email
 
+    server = None
     try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
+        logger.info("Connecting to %s:%s ...", SMTP_HOST, SMTP_PORT)
+        server = smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=30)
+        server.ehlo()
         server.starttls()
+        server.ehlo()
         server.login(sender_email, sender_password)
         server.sendmail(sender_email, receiver_email, msg.as_string())
-        server.quit()
-    except Exception as e:
-        print("Email sending failed:", e)
-        raise HTTPException(status_code=500, detail="Failed to send OTP email")
+        logger.info("OTP email sent to %s", receiver_email)
+    except smtplib.SMTPAuthenticationError as exc:
+        logger.error(
+            "SMTP authentication failed for %s — "
+            "verify EMAIL_PASSWORD is a valid Gmail App Password "
+            "(16-char, generated at myaccount.google.com/apppasswords). "
+            "SMTP response: %s",
+            sender_email,
+            exc.smtp_code,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to send OTP email: SMTP authentication failed. Check EMAIL_PASSWORD (use a Gmail App Password, not your account password).",
+        )
+    except smtplib.SMTPConnectError as exc:
+        logger.error("SMTP connection to %s:%s failed: %s", SMTP_HOST, SMTP_PORT, exc)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to send OTP email: could not connect to SMTP server.",
+        )
+    except smtplib.SMTPException as exc:
+        logger.error("SMTP error while sending OTP: %s", exc)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to send OTP email: SMTP error.",
+        )
+    except OSError as exc:
+        logger.error("Network error while sending OTP (check internet/firewall): %s", exc)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to send OTP email: network error.",
+        )
+    finally:
+        if server is not None:
+            try:
+                server.quit()
+            except smtplib.SMTPException:
+                pass
 
 
 # ----------------------------
@@ -148,6 +200,14 @@ def resend_otp(request: SendOTPRequest, db: Session = Depends(get_db)):
 @router.post("/signup")
 def signup(user: UserCreate, db: Session = Depends(get_db)):
 
+    # Never trust the role coming from the client for privileged roles.
+    # A caller cannot self-register as admin (or any future privileged role).
+    if user.role not in ALLOWED_SIGNUP_ROLES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This role cannot be created via self signup"
+        )
+
     # Check if email already exists
     existing_user = db.query(models.User).filter(
         models.User.email == user.email
@@ -160,7 +220,10 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
         )
 
     # Candidate role must be validated with OTP
-    if user.role == RoleEnum.user:
+    # TEMPORARY: when BYPASS_EMAIL_OTP is enabled the verification block below
+    # is skipped so signup works without an email/OTP. Set BYPASS_EMAIL_OTP=false
+    # to restore the original required-OTP flow.
+    if user.role == RoleEnum.user and not BYPASS_EMAIL_OTP:
         # Get OTP record
         otp_record = db.query(EmailOTP).filter(
             EmailOTP.email == user.email,
@@ -199,7 +262,8 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
         name=user.name,
         email=user.email,
         password=hashed_password,
-        role=user.role
+        role=user.role,
+        phone=user.phone,
     )
 
     db.add(new_user)
@@ -250,36 +314,81 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
 
 
 # ----------------------------
-# Protected Example Routes (RBAC Verification)
+# Protected Profile / Dashboard Data (real, DB-backed)
 # ----------------------------
 
 @router.get("/api/user/profile")
-def get_user_profile(current_user: models.User = Depends(RoleChecker(["user", "company", "admin"]))):
+def get_user_profile(
+    current_user: models.User = Depends(RoleChecker(["user", "company", "admin"])),
+    db: Session = Depends(get_db),
+):
     return {
-        "message": "User profile accessed successfully",
         "user": {
             "id": current_user.id,
             "name": current_user.name,
             "email": current_user.email,
-            "role": current_user.role.value
+            "role": current_user.role.value,
+            "phone": current_user.phone,
+            "category": current_user.category,
+            "skills": current_user.skills or [],
+            "created_at": current_user.created_at,
         }
     }
 
 
 @router.get("/api/company/data")
-def get_company_data(current_user: models.User = Depends(RoleChecker(["company", "admin"]))):
+def get_company_data(
+    current_user: models.User = Depends(RoleChecker(["company", "admin"])),
+    db: Session = Depends(get_db),
+):
+    if current_user.role == models.RoleEnum.company:
+        company = (
+            db.query(models.Company)
+            .filter(models.Company.user_id == current_user.id)
+            .first()
+        )
+        if company is None:
+            raise HTTPException(status_code=404, detail="Company profile not found")
+        company_data = schemas.CompanyOut.model_validate(company)
+        jobs = (
+            db.query(models.Job)
+            .filter(models.Job.company_id == company.id)
+            .all()
+        )
+        applicants = (
+            db.query(models.Application)
+            .filter(models.Application.job_id.in_([j.id for j in jobs] or [0]))
+            .count()
+        )
+        return {
+            "company": company_data,
+            "jobs_count": len(jobs),
+            "applicants_count": applicants,
+        }
+    # Admin view: aggregate across all companies
     return {
-        "message": "Company secure dashboard data",
-        "accessed_by": current_user.name
+        "total_companies": db.query(models.Company).count(),
+        "total_jobs": db.query(models.Job).count(),
+        "total_applications": db.query(models.Application).count(),
     }
 
 
 @router.get("/api/admin/system-stats")
-def get_admin_stats(current_user: models.User = Depends(RoleChecker(["admin"]))):
+def get_admin_stats(
+    current_user: models.User = Depends(RoleChecker(["admin"])),
+    db: Session = Depends(get_db),
+):
     return {
-        "message": "Admin system-wide reports and metrics",
         "stats": {
-            "users_online": 14,
-            "system_status": "healthy"
+            "total_users": db.query(models.User).count(),
+            "total_companies": db.query(models.Company).count(),
+            "total_jobs": db.query(models.Job).count(),
+            "open_jobs": db.query(models.Job)
+            .filter(models.Job.status == models.JobStatusEnum.open)
+            .count(),
+            "total_applications": db.query(models.Application).count(),
+            "total_resumes": db.query(models.Resume).count(),
+            "total_interviews": db.query(models.Interview).count(),
+            "system_status": "healthy",
         }
     }

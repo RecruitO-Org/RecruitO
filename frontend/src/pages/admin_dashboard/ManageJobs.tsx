@@ -1,42 +1,86 @@
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { api } from "../../lib/api";
 
 interface Job {
+  id: number;
   title: string;
-  company: string;
+  company_name: string | null;
   applicants: number;
-  status: "Open" | "Closed";
+  status: "Open" | "Closed" | string;
+  posted_on?: string;
 }
 
 export default function AdminJobs() {
-  const jobs: Job[] = [
-    { title: "Frontend Developer", company: "TechNova", applicants: 34, status: "Open" },
-    { title: "React Developer", company: "CodeCraft", applicants: 21, status: "Open" },
-    { title: "AI Engineer", company: "FutureMind AI", applicants: 12, status: "Closed" },
-  ];
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    api
+      .get<
+        {
+          id: number;
+          title: string;
+          company_name: string | null;
+          status: string;
+          applicants: number;
+          posted_on?: string;
+        }[]
+      >("/admin/jobs")
+      .then((data) => {
+        setJobs(
+          data.map((j) => ({
+            ...j,
+            status: j.status === "open" ? "Open" : "Closed",
+            applicants: j.applicants ?? 0,
+          }))
+        );
+      })
+      .catch((e) =>
+        setError(e instanceof Error ? e.message : "Failed to load jobs")
+      )
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <div className="space-y-8">
 
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-semibold">Jobs</h1>
-        <Button>Create Job</Button>
       </div>
 
+      {error && (
+        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <p className="text-white/50">Loading jobs...</p>
+      ) : (
       <div className="space-y-4">
 
-        {jobs.map((job, index) => (
-          <div
-            key={index}
-            className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition flex justify-between items-center"
-          >
-            <div>
-              <h2 className="text-lg font-semibold">{job.title}</h2>
-              <p className="text-white/60">
-                {job.company} • {job.applicants} Applicants
-              </p>
-            </div>
+        {jobs.length === 0 ? (
+          <p className="text-white/50">No job postings yet.</p>
+        ) : (
+          jobs.map((job, index) => (
+            <div
+              key={job.id ?? index}
+              className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition flex justify-between items-center"
+            >
+              <div>
+                <h2 className="text-lg font-semibold">{job.title}</h2>
+                <p className="text-white/60">
+                  {job.company_name || "Unknown company"} • {job.applicants}{" "}
+                  Applicant{job.applicants === 1 ? "" : "s"}
+                </p>
+                {job.posted_on && (
+                  <p className="text-white/40 text-sm mt-1">
+                    Posted {new Date(job.posted_on).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
 
-            <div className="flex items-center gap-4">
               <span
                 className={`px-3 py-1 text-xs rounded-full ${
                   job.status === "Open"
@@ -46,15 +90,12 @@ export default function AdminJobs() {
               >
                 {job.status}
               </span>
-
-              <Button size="sm" variant="outline">
-                Manage
-              </Button>
             </div>
-          </div>
-        ))}
+          ))
+        )}
 
       </div>
+      )}
 
     </div>
   );

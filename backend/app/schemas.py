@@ -1,0 +1,211 @@
+# pyrefly: ignore [missing-import]
+from pydantic import BaseModel, EmailStr
+from typing import Optional, List, Literal
+from datetime import datetime, date
+
+from app.models import (
+    RoleEnum,
+    JobStatusEnum,
+    ApplicationStatusEnum,
+    InterviewStatusEnum,
+)
+
+
+# -----------------------------
+# User / Profile
+# -----------------------------
+class ProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    category: Optional[str] = None
+    skills: Optional[List[str]] = None
+
+
+class UserOut(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+    role: RoleEnum
+    is_active: bool = True
+    phone: Optional[str] = None
+    category: Optional[str] = None
+    skills: Optional[List[str]] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# -----------------------------
+# Company
+# -----------------------------
+class CompanyCreate(BaseModel):
+    name: str
+    website: Optional[str] = None
+    registration_number: Optional[str] = None
+    industry: Optional[str] = None
+    location: Optional[str] = None
+    size: Optional[str] = None
+    about: Optional[str] = None
+    logo_url: Optional[str] = None
+
+
+class CompanyUpdate(BaseModel):
+    name: Optional[str] = None
+    website: Optional[str] = None
+    registration_number: Optional[str] = None
+    industry: Optional[str] = None
+    location: Optional[str] = None
+    size: Optional[str] = None
+    about: Optional[str] = None
+    logo_url: Optional[str] = None
+
+
+class CompanyOut(BaseModel):
+    id: int
+    user_id: int
+    name: str
+    website: Optional[str] = None
+    registration_number: Optional[str] = None
+    industry: Optional[str] = None
+    location: Optional[str] = None
+    size: Optional[str] = None
+    about: Optional[str] = None
+    logo_url: Optional[str] = None
+    approved: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# -----------------------------
+# Job
+# -----------------------------
+class JobCreate(BaseModel):
+    title: str
+    department: Optional[str] = None
+    location: Optional[str] = None
+    type: Optional[str] = None
+    experience: Optional[str] = None
+    salary: Optional[str] = None
+    skills: Optional[List[str]] = None
+    vacancies: Optional[int] = 1
+    description: Optional[str] = None
+    deadline: Optional[date] = None
+    status: Optional[JobStatusEnum] = JobStatusEnum.open
+
+
+class JobUpdate(BaseModel):
+    title: Optional[str] = None
+    department: Optional[str] = None
+    location: Optional[str] = None
+    type: Optional[str] = None
+    experience: Optional[str] = None
+    salary: Optional[str] = None
+    skills: Optional[List[str]] = None
+    vacancies: Optional[int] = None
+    description: Optional[str] = None
+    deadline: Optional[date] = None
+    status: Optional[JobStatusEnum] = None
+
+
+class JobOut(BaseModel):
+    id: int
+    company_id: int
+    title: str
+    department: Optional[str] = None
+    location: Optional[str] = None
+    type: Optional[str] = None
+    experience: Optional[str] = None
+    salary: Optional[str] = None
+    skills: Optional[List[str]] = None
+    vacancies: int
+    description: Optional[str] = None
+    deadline: Optional[date] = None
+    status: JobStatusEnum
+    posted_on: datetime
+    company_name: Optional[str] = None
+    applicant_count: int = 0
+
+    class Config:
+        from_attributes = True
+
+
+# -----------------------------
+# Resume
+# -----------------------------
+class ResumeOut(BaseModel):
+    id: int
+    user_id: int
+    original_filename: str
+    extension: Optional[str] = None
+    uploaded_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# -----------------------------
+# Application
+# -----------------------------
+class ApplicationCreate(BaseModel):
+    job_id: int
+
+
+class ApplicationOut(BaseModel):
+    id: int
+    job_id: int
+    user_id: int
+    status: ApplicationStatusEnum
+    match_score: Optional[int] = None
+    created_at: datetime
+    job_title: Optional[str] = None
+    company_name: Optional[str] = None
+    applicant_name: Optional[str] = None
+    applicant_email: Optional[EmailStr] = None
+    applicant_phone: Optional[str] = None
+    applicant_skills: Optional[List[str]] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ApplicationUpdate(BaseModel):
+    status: ApplicationStatusEnum
+
+
+# -----------------------------
+# Interview
+# -----------------------------
+class InterviewCreate(BaseModel):
+    application_id: int
+    scheduled_at: datetime
+    notes: Optional[str] = None
+
+
+class InterviewUpdate(BaseModel):
+    scheduled_at: Optional[datetime] = None
+    status: Optional[InterviewStatusEnum] = None
+    notes: Optional[str] = None
+    score: Optional[int] = None
+
+
+class InterviewOut(BaseModel):
+    id: int
+    application_id: int
+    job_id: int
+    user_id: int
+    scheduled_at: Optional[datetime] = None
+    status: InterviewStatusEnum
+    notes: Optional[str] = None
+    score: Optional[int] = None
+    created_at: datetime
+    job_title: Optional[str] = None
+    company_name: Optional[str] = None
+    applicant_name: Optional[str] = None
+    applicant_email: Optional[str] = None
+    applicant_phone: Optional[str] = None
+
+    class Config:
+        from_attributes = True

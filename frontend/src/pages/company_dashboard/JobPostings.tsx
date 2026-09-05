@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Plus, Briefcase, X } from "lucide-react";
 import { useState } from "react";
 import { useJobs } from "./JobsContext";
-import { Job } from "./data";
+import { ApiJobInput } from "./data";
 
 /* ---------------- TYPES ---------------- */
 
@@ -21,9 +21,10 @@ type NewJob = {
 
 export default function JobPostings(): JSX.Element {
   const navigate = useNavigate();
-  const { jobs, setJobs } = useJobs();
+  const { jobs, createJob, loading } = useJobs();
 
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [newJob, setNewJob] = useState<NewJob>({
     title: "",
@@ -37,40 +38,37 @@ export default function JobPostings(): JSX.Element {
 
   /* ---------------- CREATE JOB ---------------- */
 
-  const handleCreateJob = (): void => {
+  const handleCreateJob = async (): Promise<void> => {
     if (!newJob.title || !newJob.skills) return;
 
-    const formattedJob: Job = {
-      id: jobs.length > 0 ? Math.max(...jobs.map(j => j.id)) + 1 : 1,
+    const payload: ApiJobInput = {
       title: newJob.title,
       department: "Engineering",
-      location: newJob.location,
-      type: newJob.type,
+      location: newJob.location || "Not specified",
+      type: newJob.type || "Full-time",
       experience: newJob.experience,
       salary: newJob.salary,
-      skills: newJob.skills.split(",").map(s => s.trim()),
-      vacancies: Number(newJob.vacancies),
-      applicants: 0,
-      shortlisted: 0,
-      interviews: 0,
-      avgMatch: 0,
-      postedOn: new Date().toLocaleDateString(),
-      deadline: "Not Set",
+      skills: newJob.skills.split(",").map((s) => s.trim()).filter(Boolean),
+      vacancies: Number(newJob.vacancies) || 1,
       status: "Open",
     };
 
-    setJobs([...jobs, formattedJob]);
-    setShowModal(false);
-
-    setNewJob({
-      title: "",
-      skills: "",
-      vacancies: 1,
-      location: "",
-      type: "",
-      experience: "",
-      salary: "",
-    });
+    try {
+      await createJob(payload);
+      setShowModal(false);
+      setSubmitError(null);
+      setNewJob({
+        title: "",
+        skills: "",
+        vacancies: 1,
+        location: "",
+        type: "",
+        experience: "",
+        salary: "",
+      });
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : "Failed to create job");
+    }
   };
 
   /* ---------------- FIELD CONFIG ---------------- */
@@ -107,6 +105,16 @@ export default function JobPostings(): JSX.Element {
 
         {/* Job Cards */}
         <div className="grid md:grid-cols-2 gap-6">
+          {loading && jobs.length === 0 && (
+            <p className="text-gray-500 dark:text-gray-400">
+              Loading job postings...
+            </p>
+          )}
+          {!loading && jobs.length === 0 && (
+            <p className="text-gray-500 dark:text-gray-400">
+              No job postings yet. Create your first job.
+            </p>
+          )}
           {jobs.map((job) => (
             <div
               key={job.id}
@@ -236,6 +244,12 @@ export default function JobPostings(): JSX.Element {
               >
                 Create Job
               </button>
+
+              {submitError && (
+                <p className="text-sm text-red-600 dark:text-red-400 text-center">
+                  {submitError}
+                </p>
+              )}
             </div>
           </div>
         )}

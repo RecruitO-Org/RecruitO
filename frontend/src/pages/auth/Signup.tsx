@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuthStore } from "../../store/AuthStore";
+import { api } from "../../lib/api";
 
 type Role = "user" | "company";
 
 export default function Signup() {
   const navigate = useNavigate();
+  const login = useAuthStore((state) => state.login);
   const [role, setRole] = useState<Role>("user");
 
   const [email, setEmail] = useState("");
@@ -14,7 +17,6 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const [fullName, setFullName] = useState("");
-  const [otp, setOtp] = useState("");
 
   const [companyName, setCompanyName] = useState("");
   const [website, setWebsite] = useState("");
@@ -23,78 +25,8 @@ export default function Signup() {
 
   const [error, setError] = useState("");
 
-  const [otpSent, setOtpSent] = useState(false);
-  const [timer, setTimer] = useState(0);
-
   const isFreeEmail = (email: string) => {
     return /@(gmail|yahoo|outlook|hotmail)\.com$/i.test(email);
-  };
-
-  const startTimer = () => {
-    setTimer(30);
-    const interval = setInterval(() => {
-      setTimer((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  const sendOTP = async () => {
-    if (!email) {
-      setError("Enter email first");
-      return;
-    }
-
-    try {
-      const response = await fetch("http://127.0.0.1:8000/send-otp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.detail || "Failed to send OTP");
-        return;
-      }
-
-      setOtpSent(true);
-      startTimer();
-
-    } catch {
-      setError("Server error while sending OTP");
-    }
-  };
-
-  const resendOTP = async () => {
-    try {
-      const response = await fetch("http://127.0.0.1:8000/resend-otp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.detail || "Failed to resend OTP");
-        return;
-      }
-
-      startTimer();
-
-    } catch {
-      setError("Server error while resending OTP");
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -117,7 +49,7 @@ export default function Signup() {
     }
 
     if (role === "user") {
-      if (!fullName || !otp) {
+      if (!fullName) {
         setError("Please complete all candidate fields");
         return;
       }
@@ -136,25 +68,37 @@ export default function Signup() {
     }
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: role === "user" ? fullName : companyName,
-          email,
-          password,
-          role,
-          otp,
-        }),
+      await api.post("/signup", {
+        name: role === "user" ? fullName : companyName,
+        email,
+        phone,
+        password,
+        role,
+        otp: "",
       });
 
-      const data = await response.json();
+      // Auto-login after successful signup
+      try {
+        const loginData = await api.post<{
+          access_token: string;
+          role: string;
+          name: string;
+        }>("/login", { email, password });
 
-      if (!response.ok) {
-        setError(data.detail || "Signup failed");
-        return;
+        login(loginData.access_token, loginData.role as "admin" | "company" | "user", loginData.name, email);
+
+        if (role === "company" && loginData.access_token) {
+          await api
+            .post("/companies", {
+              name: companyName,
+              website,
+              registration_number: registrationNumber,
+              industry,
+            })
+            .catch(() => {});
+        }
+      } catch {
+        // Token issuance failure is non-fatal
       }
 
       if (role === "user") {
@@ -162,9 +106,8 @@ export default function Signup() {
       } else {
         navigate("/company/dashboard");
       }
-
-    } catch {
-      setError("Server error. Please try again.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Server error. Please try again.");
     }
   };
 
@@ -282,42 +225,6 @@ export default function Signup() {
             value={confirmPassword}
             onChange={(e)=>setConfirmPassword(e.target.value)}
             className="inputStyle"/>
-
-          {role === "user" && (
-            <div className="space-y-3">
-
-              <div className="flex gap-3">
-                <input
-                  placeholder="Enter OTP"
-                  value={otp}
-                  onChange={(e)=>setOtp(e.target.value)}
-                  className="flex-1 inputStyle"
-                />
-
-                <button
-                  type="button"
-                  onClick={sendOTP}
-                  className={`px-4 rounded-xl text-white text-sm ${
-                    otpSent ? "bg-green-600" : "bg-violet-600"
-                  }`}
-                >
-                  {otpSent ? "Sent" : "Send OTP"}
-                </button>
-              </div>
-
-              <button
-                type="button"
-                disabled={timer > 0}
-                onClick={resendOTP}
-                className={`text-sm ${
-                  timer > 0 ? "text-gray-500" : "text-violet-400"
-                }`}
-              >
-                {timer > 0 ? `Resend OTP in ${timer}s` : "Resend OTP"}
-              </button>
-
-            </div>
-          )}
 
           {error && (
             <p className="text-red-400 text-sm text-center">{error}</p>

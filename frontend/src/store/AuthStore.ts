@@ -15,6 +15,32 @@ interface AuthState {
   logout: () => void;
 }
 
+/** Decode a JWT's payload (the middle segment) without a library. */
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const base64 = token.split(".")[1];
+    if (!base64) return null;
+    const json = atob(base64.replace(/-/g, "+").replace(/_/g, "/"));
+    return JSON.parse(decodeURIComponent(
+      json
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    ));
+  } catch {
+    return null;
+  }
+}
+
+/** True when the JWT exists and its `exp` claim (seconds) has passed. */
+export function isTokenExpired(token: string | null): boolean {
+  if (!token) return true;
+  const payload = decodeJwtPayload(token);
+  const exp = payload?.exp;
+  if (typeof exp !== "number") return false; // no exp -> treat as valid
+  return Date.now() >= exp * 1000;
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({

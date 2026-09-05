@@ -1,60 +1,41 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { api } from "../../lib/api";
 
-interface Insight {
-  name: string;
-  role: string;
-  aiScore: number;
-  strengths: string[];
-  weaknesses: string[];
-  recommendation: string;
+interface Application {
+  id: number;
+  job_title: string | null;
+  applicant_name: string | null;
+  status: string;
+  match_score: number | null;
+  created_at: string;
 }
 
 export default function AIInsights() {
   const [search, setSearch] = useState("");
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const insights: Insight[] = [
-    {
-      name: "Rahul Mehta",
-      role: "Frontend Developer",
-      aiScore: 88,
-      strengths: ["Strong React fundamentals", "Clean UI logic"],
-      weaknesses: ["Limited backend exposure"],
-      recommendation: "Proceed to Technical Round 2",
-    },
-    {
-      name: "Priya Sharma",
-      role: "React Developer",
-      aiScore: 76,
-      strengths: ["Redux expertise", "System design clarity"],
-      weaknesses: ["Performance optimization needed"],
-      recommendation: "Schedule System Design Round",
-    },
-    {
-      name: "Aman Verma",
-      role: "AI Engineer",
-      aiScore: 92,
-      strengths: ["Strong ML concepts", "Model deployment experience"],
-      weaknesses: ["Communication skills average"],
-      recommendation: "Highly Recommended",
-    },
-  ];
+  useEffect(() => {
+    api
+      .get<Application[]>("/admin/applications")
+      .then(setApplications)
+      .catch((e) =>
+        setError(e instanceof Error ? e.message : "Failed to load candidates")
+      )
+      .finally(() => setLoading(false));
+  }, []);
 
-  // ================= FILTER =================
-  const filteredInsights = useMemo(() => {
-    return insights.filter(
+  const filtered = useMemo(() => {
+    return applications.filter(
       (candidate) =>
-        candidate.name.toLowerCase().includes(search.toLowerCase()) ||
-        candidate.role.toLowerCase().includes(search.toLowerCase())
+        (candidate.applicant_name || "")
+          .toLowerCase()
+          .includes(search.toLowerCase()) ||
+        (candidate.job_title || "").toLowerCase().includes(search.toLowerCase())
     );
-  }, [search]);
-
-  const scoreColor = (score: number) => {
-    if (score >= 85) return "text-green-400";
-    if (score >= 70) return "text-yellow-400";
-    return "text-red-400";
-  };
+  }, [applications, search]);
 
   return (
     <div className="space-y-8">
@@ -77,76 +58,68 @@ export default function AIInsights() {
         className="w-full md:w-1/2 px-5 py-3 rounded-xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-violet-500 text-white placeholder:text-gray-400"
       />
 
-      {/* ================= INSIGHT CARDS ================= */}
+      {error && (
+        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <p className="text-gray-400">Loading candidates...</p>
+      ) : (
       <div className="grid md:grid-cols-2 gap-6">
 
-        {filteredInsights.length === 0 && (
-          <p className="text-gray-400">No insights found.</p>
+        {filtered.length === 0 && (
+          <p className="text-gray-400">No candidates found.</p>
         )}
 
-        {filteredInsights.map((candidate, index) => (
+        {filtered.map((candidate, index) => (
           <motion.div
-            key={index}
+            key={candidate.id ?? index}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
             className="p-6 rounded-2xl bg-white/5 border border-white/10 shadow-xl backdrop-blur-md hover:scale-[1.02] transition-all"
           >
-            {/* Top */}
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-xl font-semibold text-white">
-                  {candidate.name}
+                  {candidate.applicant_name || "Candidate"}
                 </h2>
-                <p className="text-gray-400">{candidate.role}</p>
+                <p className="text-gray-400">{candidate.job_title || "Unknown role"}</p>
               </div>
 
-              <div
-                className={`text-lg font-bold ${scoreColor(
-                  candidate.aiScore
-                )}`}
-              >
-                {candidate.aiScore}% Score
+              <div className="text-right">
+                <div className="text-sm capitalize text-green-400">
+                  {candidate.status}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {new Date(candidate.created_at).toLocaleDateString()}
+                </div>
               </div>
             </div>
 
-            {/* Strengths */}
             <div className="mb-3">
-              <p className="text-sm font-semibold text-green-400 mb-1">
-                Strengths
+              <p className="text-sm font-semibold text-violet-400 mb-1">
+                AI Match Score
               </p>
-              <ul className="text-sm text-gray-300 space-y-1">
-                {candidate.strengths.map((item, i) => (
-                  <li key={i}>• {item}</li>
-                ))}
-              </ul>
+              <p className="text-sm text-gray-300">
+                {candidate.match_score != null
+                  ? `${candidate.match_score}%`
+                  : "AI scoring not available yet. Resume analysis is coming soon."}
+              </p>
             </div>
 
-            {/* Weaknesses */}
-            <div className="mb-4">
-              <p className="text-sm font-semibold text-red-400 mb-1">
-                Weaknesses
-              </p>
-              <ul className="text-sm text-gray-300 space-y-1">
-                {candidate.weaknesses.map((item, i) => (
-                  <li key={i}>• {item}</li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Recommendation */}
-            <div className="flex justify-between items-center">
-              <p className="text-sm text-violet-400 font-semibold">
-                {candidate.recommendation}
-              </p>
-
-              <Button className="bg-gradient-to-r from-violet-600 to-blue-600 hover:opacity-90">
-                View Full Report
-              </Button>
-            </div>
+            <p className="text-sm text-gray-400">
+              {candidate.match_score != null
+                ? "AI insights and recommendations will appear here."
+                : "Once AI resume analysis is enabled, strengths, weaknesses, and recommendations will be generated for each candidate."}
+            </p>
           </motion.div>
         ))}
       </div>
+      )}
+
     </div>
   );
 }

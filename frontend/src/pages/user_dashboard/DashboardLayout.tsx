@@ -7,6 +7,18 @@ import { useAuthStore } from "../../store/AuthStore";
 export default function DashboardLayout() {
   const navigate = useNavigate();
   const logout = useAuthStore((state) => state.logout);
+  const name = useAuthStore((state) => state.name);
+
+  // Initials for the avatar, derived from the logged-in user.
+  const initials = name
+    ? name
+        .split(" ")
+        .map((part) => part[0])
+        .filter(Boolean)
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
+    : "U";
 
   // Apply saved theme on mount
   useEffect(() => {
@@ -32,10 +44,13 @@ export default function DashboardLayout() {
   ];
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-[#0f172a] text-black dark:text-white transition-colors duration-300">
+    // The user dashboard pages are designed as a dark UI, so the shell always
+    // uses a dark background regardless of the saved OS/app theme to keep the
+    // inner content readable (fixes invisible text when "light" theme is set).
+    <div className="flex min-h-screen bg-[#0f172a] text-white transition-colors duration-300">
 
       {/* ================= SIDEBAR ================= */}
-      <aside className="w-64 bg-gray-100 dark:bg-[#0b1120] border-r border-black/10 dark:border-white/5 p-6 flex flex-col">
+      <aside className="w-64 bg-[#0b1120] border-r border-white/5 p-6 flex flex-col">
 
         <h2 className="text-xl font-semibold mb-10 tracking-wide">
           RecruitO
@@ -51,7 +66,7 @@ export default function DashboardLayout() {
                 `block px-4 py-2 rounded-lg transition-all ${
                   isActive
                     ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-lg"
-                    : "hover:bg-black/5 dark:hover:bg-white/5"
+                    : "hover:bg-white/5"
                 }`
               }
             >
@@ -86,7 +101,7 @@ export default function DashboardLayout() {
             className="cursor-pointer hover:scale-105 transition"
             onClick={() => navigate("/dashboard/profile")}
           >
-            <AvatarFallback>SR</AvatarFallback>
+            <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
         </div>
 

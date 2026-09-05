@@ -1,41 +1,88 @@
-import { useState } from "react";
-import InterviewDetails from "./InterviewDetails";
-import { Interview } from "./intervieww";
-
+import { useState, useEffect } from "react";
+import { api } from "../../lib/api";
 import CompanyLayout from "./CompanyLayout";
+import InterviewDetails from "./InterviewDetails";
+
+interface ApiInterview {
+  id: number;
+  application_id: number;
+  job_id: number;
+  user_id: number;
+  scheduled_at: string | null;
+  status: string;
+  notes: string | null;
+  score: number | null;
+  created_at: string;
+  job_title: string | null;
+  company_name: string | null;
+  applicant_name: string | null;
+  applicant_email: string | null;
+  applicant_phone: string | null;
+}
 
 export default function Interviews() {
-  const [selected, setSelected] = useState<Interview| null>(null);
+  const [interviews, setInterviews] = useState<ApiInterview[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<ApiInterview | null>(null);
 
-  const interviews: Interview[] = [
-    {
-      id: "1",
-      candidateName: "Ananya Sharma",
-      jobTitle: "Frontend Developer",
-      scheduledDate: "12 Feb 2026",
-      status: "Completed",
-      integrityWarnings: 1,
-      videoUrl: "/sample-video.mp4",
-      aiScore: 8,
-    },
-    {
-      id: "2",
-      candidateName: "Rahul Mehta",
-      jobTitle: "Backend Developer",
-      scheduledDate: "10 Feb 2026",
-      status: "Flagged",
-      integrityWarnings: 4,
-      aiScore: 6,
-    },
-  ];
+  const loadInterviews = () => {
+    api
+      .get<ApiInterview[]>("/interviews")
+      .then(setInterviews)
+      .catch((e) =>
+        setError(e instanceof Error ? e.message : "Failed to load interviews")
+      )
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadInterviews();
+  }, []);
+
+  const handleUpdated = () => {
+    setSelected(null);
+    loadInterviews();
+  };
+
+  const formatDate = (d: string | null) => {
+    if (!d) return "Not scheduled";
+    const date = new Date(d);
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+  };
+
+  const statusColor = (s: string) => {
+    switch (s) {
+      case "completed":
+        return "bg-green-500/10 text-green-500";
+      case "cancelled":
+        return "bg-red-500/10 text-red-500";
+      case "scheduled":
+      default:
+        return "bg-yellow-500/10 text-yellow-500";
+    }
+  };
 
   return (
     <CompanyLayout>
       <div className="p-6">
-
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
           Interview Management
         </h1>
+
+        {loading && (
+          <p className="text-gray-500 dark:text-gray-400">Loading interviews...</p>
+        )}
+
+        {error && (
+          <p className="text-sm text-red-600 dark:text-red-400 mb-4">{error}</p>
+        )}
+
+        {!loading && interviews.length === 0 && (
+          <p className="text-gray-500 dark:text-gray-400">
+            No interviews scheduled yet. Schedule one from the Applicants page.
+          </p>
+        )}
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {interviews.map((interview) => (
@@ -52,21 +99,15 @@ export default function Interviews() {
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {interview.candidateName}
+                    {interview.applicant_name || "Candidate"}
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    {interview.jobTitle}
+                    {interview.job_title || "Untitled Job"}
                   </p>
                 </div>
 
                 <span
-                  className={`px-3 py-1 text-xs rounded-full font-medium ${
-                    interview.status === "Completed"
-                      ? "bg-green-500/10 text-green-500"
-                      : interview.status === "Flagged"
-                      ? "bg-red-500/10 text-red-500"
-                      : "bg-yellow-500/10 text-yellow-500"
-                  }`}
+                  className={`px-3 py-1 text-xs rounded-full font-medium capitalize ${statusColor(interview.status)}`}
                 >
                   {interview.status}
                 </span>
@@ -74,19 +115,21 @@ export default function Interviews() {
 
               <div className="mt-6 space-y-4 text-sm">
                 <div className="flex items-center gap-3 text-gray-500 dark:text-gray-300">
-                  📅 {interview.scheduledDate}
+                  {formatDate(interview.scheduled_at)}
                 </div>
 
-                <div
-                  className={`px-3 py-2 rounded-lg text-xs font-medium w-fit ${
-                    interview.integrityWarnings > 2
-                      ? "bg-red-500/10 text-red-500"
-                      : "bg-yellow-500/10 text-yellow-500"
-                  }`}
-                >
-                  ⚠ {interview.integrityWarnings} Warning
-                  {interview.integrityWarnings !== 1 && "s"}
-                </div>
+                {interview.applicant_email && (
+                  <div className="text-gray-500 dark:text-gray-400 text-xs">
+                    {interview.applicant_email}
+                    {interview.applicant_phone && ` • ${interview.applicant_phone}`}
+                  </div>
+                )}
+
+                {interview.notes && (
+                  <p className="text-xs text-gray-400 dark:text-gray-500 line-clamp-2">
+                    {interview.notes}
+                  </p>
+                )}
               </div>
 
               <button
@@ -108,9 +151,9 @@ export default function Interviews() {
           <InterviewDetails
             interview={selected}
             onClose={() => setSelected(null)}
+            onUpdated={handleUpdated}
           />
         )}
-
       </div>
     </CompanyLayout>
   );

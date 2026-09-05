@@ -1,15 +1,16 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useAuthStore } from "../store/AuthStore";
+import { useAuthStore, isTokenExpired } from "../store/AuthStore";
 
 interface ProtectedRouteProps {
   allowedRoles: Array<"admin" | "company" | "user">;
 }
 
 export default function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
-  const { token, role } = useAuthStore();
+  const { token, role, logout } = useAuthStore();
 
-  if (!token) {
-    // Redirect to signin if not authenticated
+  if (!token || isTokenExpired(token)) {
+    // Expired or missing token -> clear state and require signin.
+    if (token && isTokenExpired(token)) logout();
     return <Navigate to="/signin" replace />;
   }
 

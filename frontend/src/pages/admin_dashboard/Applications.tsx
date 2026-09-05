@@ -1,5 +1,4 @@
-import { useState, useMemo } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect, useMemo } from "react";
 import {
   Select,
   SelectContent,
@@ -8,53 +7,53 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { motion } from "framer-motion";
+import { api } from "../../lib/api";
+
+interface Application {
+  id: number;
+  job_title: string | null;
+  applicant_name: string | null;
+  status: string;
+  match_score: number | null;
+  created_at: string;
+}
 
 export default function Applications() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("All");
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const applications = [
-    {
-      name: "Rahul Mehta",
-      role: "Frontend Developer",
-      experience: "2 Years",
-      status: "Pending",
-      match: 82,
-    },
-    {
-      name: "Priya Sharma",
-      role: "React Developer",
-      experience: "3 Years",
-      status: "Shortlisted",
-      match: 88,
-    },
-    {
-      name: "Aman Verma",
-      role: "AI Engineer",
-      experience: "1.5 Years",
-      status: "Rejected",
-      match: 65,
-    },
-  ];
+  useEffect(() => {
+    api
+      .get<Application[]>("/admin/applications")
+      .then(setApplications)
+      .catch((e) =>
+        setError(e instanceof Error ? e.message : "Failed to load applications")
+      )
+      .finally(() => setLoading(false));
+  }, []);
 
   // ================= FILTER LOGIC =================
   const filteredApplications = useMemo(() => {
     return applications.filter((app) => {
       const matchesSearch =
-        app.name.toLowerCase().includes(search.toLowerCase()) ||
-        app.role.toLowerCase().includes(search.toLowerCase());
+        (app.applicant_name || "").toLowerCase().includes(search.toLowerCase()) ||
+        (app.job_title || "").toLowerCase().includes(search.toLowerCase());
 
       const matchesStatus =
-        status === "All" || app.status === status;
+        status === "All" || app.status === status.toLowerCase();
 
       return matchesSearch && matchesStatus;
     });
-  }, [search, status]);
+  }, [applications, search, status]);
 
   const statusColor = (status: string) => {
-    if (status === "Shortlisted")
+    const s = status.toLowerCase();
+    if (s === "shortlisted" || s === "accepted" || s === "interviewed")
       return "bg-green-500/20 text-green-400";
-    if (status === "Rejected")
+    if (s === "rejected" || s === "withdrawn")
       return "bg-red-500/20 text-red-400";
     return "bg-yellow-500/20 text-yellow-400";
   };
@@ -75,7 +74,6 @@ export default function Applications() {
       {/* ================= SEARCH + FILTER ================= */}
       <div className="flex flex-col md:flex-row gap-4">
 
-        {/* Search */}
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -83,7 +81,6 @@ export default function Applications() {
           className="flex-1 px-5 py-3 rounded-xl bg-white/5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-violet-500 text-white placeholder:text-gray-400"
         />
 
-        {/* Status Filter */}
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className="w-[200px] rounded-xl bg-white/5 border border-white/10 text-white">
             <SelectValue />
@@ -91,18 +88,25 @@ export default function Applications() {
 
           <SelectContent className="bg-[#0f172a] border border-white/10 text-white">
             <SelectItem value="All">All</SelectItem>
-            <SelectItem value="Pending">Pending</SelectItem>
+            <SelectItem value="Applied">Applied</SelectItem>
             <SelectItem value="Shortlisted">Shortlisted</SelectItem>
+            <SelectItem value="Interviewed">Interviewed</SelectItem>
             <SelectItem value="Rejected">Rejected</SelectItem>
+            <SelectItem value="Withdrawn">Withdrawn</SelectItem>
           </SelectContent>
         </Select>
-
-        <Button className="px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 hover:opacity-90">
-          Filter
-        </Button>
       </div>
 
-      {/* ================= APPLICATION CARDS ================= */}
+      {error && (
+        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <p className="text-gray-400">Loading applications...</p>
+      ) : (
+      /* ================= APPLICATION CARDS ================= */
       <div className="grid md:grid-cols-2 gap-6">
 
         {filteredApplications.length === 0 && (
@@ -111,7 +115,7 @@ export default function Applications() {
 
         {filteredApplications.map((app, index) => (
           <motion.div
-            key={index}
+            key={app.id ?? index}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
@@ -121,15 +125,18 @@ export default function Applications() {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-xl font-semibold text-white">
-                  {app.name}
+                  {app.applicant_name || "Candidate"}
                 </h2>
                 <p className="text-gray-400">
-                  {app.role} • {app.experience}
+                  {app.job_title || "Unknown role"}
+                </p>
+                <p className="text-gray-500 text-xs mt-1">
+                  Applied {new Date(app.created_at).toLocaleDateString()}
                 </p>
               </div>
 
               <div
-                className={`text-xs px-3 py-1 rounded-full font-semibold ${statusColor(
+                className={`text-xs px-3 py-1 rounded-full font-semibold capitalize ${statusColor(
                   app.status
                 )}`}
               >
@@ -139,25 +146,15 @@ export default function Applications() {
 
             {/* Match Score */}
             <p className="mb-4 text-sm text-violet-400 font-semibold">
-              {app.match}% AI Match
+              {app.match_score != null
+                ? `${app.match_score}% AI Match`
+                : "Match score not computed yet"}
             </p>
-
-            {/* Buttons */}
-            <div className="flex justify-between items-center">
-              <Button
-                variant="outline"
-                className="border-white/20 text-white hover:bg-white/10"
-              >
-                View Resume
-              </Button>
-
-              <Button className="bg-gradient-to-r from-violet-600 to-blue-600 hover:opacity-90">
-                Schedule Interview
-              </Button>
-            </div>
           </motion.div>
         ))}
       </div>
+      )}
+
     </div>
   );
 }

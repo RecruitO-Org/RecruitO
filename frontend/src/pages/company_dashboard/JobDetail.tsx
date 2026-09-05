@@ -3,18 +3,27 @@ import CompanyLayout from "./CompanyLayout";
 import { useJobs } from "./JobsContext";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Job } from "./data";
+import { ApiJobInput } from "./data";
 
 export default function JobDetail(): JSX.Element {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { jobs, setJobs } = useJobs();
+  const { jobs, updateJob, deleteJob } = useJobs();
 
   const jobId = Number(id);
   const job = jobs.find((j) => j.id === jobId);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  // Local editable fields, initialized from the loaded job.
+  const [form, setForm] = useState({
+    title: job?.title || "",
+    vacancies: job?.vacancies ?? 1,
+    skills: (job?.skills || []).join(", "),
+  });
 
   if (!job) {
     return (
@@ -28,20 +37,44 @@ export default function JobDetail(): JSX.Element {
     );
   }
 
-  const updateJob = (updatedJob: Job): void => {
-    setJobs(jobs.map((j) => (j.id === job.id ? updatedJob : j)));
+  const persist = async (input: Partial<ApiJobInput>) => {
+    setSaving(true);
+    setActionError(null);
+    try {
+      await updateJob(job.id, input);
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const toggleStatus = (): void => {
-    updateJob({
-      ...job,
+  const handleSave = async (): Promise<void> => {
+    if (!form.title) return;
+    await persist({
+      title: form.title,
+      vacancies: Number(form.vacancies) || 1,
+      skills: form.skills.split(",").map((s) => s.trim()).filter(Boolean),
+    });
+    setIsEditing(false);
+  };
+
+  const toggleStatus = async (): Promise<void> => {
+    await persist({
       status: job.status === "Open" ? "Closed" : "Open",
     });
   };
 
-  const deleteJob = (): void => {
-    setJobs(jobs.filter((j) => j.id !== job.id));
-    navigate("/company/job-postings");
+  const handleDelete = async (): Promise<void> => {
+    setSaving(true);
+    setActionError(null);
+    try {
+      await deleteJob(job.id);
+      navigate("/company/job-postings");
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Delete failed");
+      setSaving(false);
+    }
   };
 
   return (
@@ -57,15 +90,19 @@ export default function JobDetail(): JSX.Element {
           Back to Job Postings
         </button>
 
+        {actionError && (
+          <p className="text-sm text-red-600 dark:text-red-400">{actionError}</p>
+        )}
+
         {/* Header */}
         <div className="flex justify-between items-start">
 
           <div>
             {isEditing ? (
               <input
-                value={job.title}
+                value={form.title}
                 onChange={(e) =>
-                  updateJob({ ...job, title: e.target.value })
+                  setForm({ ...form, title: e.target.value })
                 }
                 className="
                   text-3xl font-bold p-2 rounded-lg
@@ -95,20 +132,28 @@ export default function JobDetail(): JSX.Element {
           <div className="flex gap-3">
 
             <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition"
+              onClick={() => {
+                if (isEditing) {
+                  handleSave();
+                } else {
+                  setIsEditing(true);
+                }
+              }}
+              disabled={saving}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition disabled:opacity-60"
             >
               <Pencil size={16} />
-              {isEditing ? "Save" : "Edit"}
+              {isEditing ? (saving ? "Saving..." : "Save") : "Edit"}
             </button>
 
             <button
               onClick={toggleStatus}
+              disabled={saving}
               className="
                 bg-yellow-100 text-yellow-700 hover:bg-yellow-200
                 dark:bg-yellow-600/20 dark:text-yellow-400
                 dark:hover:bg-yellow-600/30
-                px-4 py-2 rounded-lg text-sm transition
+                px-4 py-2 rounded-lg text-sm transition disabled:opacity-60
               "
             >
               {job.status === "Open" ? "Close Job" : "Reopen Job"}
@@ -145,6 +190,7 @@ export default function JobDetail(): JSX.Element {
             <Info label="Experience" value={job.experience} />
             <Info label="Salary" value={job.salary} />
             <Info label="Posted On" value={job.postedOn} />
+            <Info label="Applicants" value={String(job.applicants)} />
 
             <div>
               <p className="text-gray-500 dark:text-gray-400">
@@ -153,12 +199,9 @@ export default function JobDetail(): JSX.Element {
               {isEditing ? (
                 <input
                   type="number"
-                  value={job.vacancies}
+                  value={form.vacancies}
                   onChange={(e) =>
-                    updateJob({
-                      ...job,
-                      vacancies: Number(e.target.value),
-                    })
+                    setForm({ ...form, vacancies: Number(e.target.value) })
                   }
                   className="
                     mt-1 w-24 p-2 rounded-lg
@@ -175,6 +218,15 @@ export default function JobDetail(): JSX.Element {
             </div>
           </div>
 
+          <div className="mt-4">
+            <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">
+              Description
+            </p>
+            <p className="text-gray-900 dark:text-white text-sm">
+              {job.description || "No description provided."}
+            </p>
+          </div>
+
           {/* Skills */}
           <div className="mt-8">
             <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">
@@ -183,15 +235,8 @@ export default function JobDetail(): JSX.Element {
 
             {isEditing ? (
               <input
-                value={job.skills.join(", ")}
-                onChange={(e) =>
-                  updateJob({
-                    ...job,
-                    skills: e.target.value
-                      .split(",")
-                      .map((s) => s.trim()),
-                  })
-                }
+                value={form.skills}
+                onChange={(e) => setForm({ ...form, skills: e.target.value })}
                 className="
                   w-full p-2 rounded-lg
                   bg-gray-100 dark:bg-gray-800
@@ -249,10 +294,11 @@ export default function JobDetail(): JSX.Element {
               </button>
 
               <button
-                onClick={deleteJob}
-                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+                onClick={handleDelete}
+                disabled={saving}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
               >
-                Confirm Delete
+                {saving ? "Deleting..." : "Confirm Delete"}
               </button>
             </div>
           </div>
