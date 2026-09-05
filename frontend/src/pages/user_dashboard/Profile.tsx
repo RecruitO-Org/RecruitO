@@ -33,6 +33,7 @@ export default function Profile() {
   const [phone, setPhone] = useState("");
   const [category, setCategory] = useState("");
   const [skills, setSkills] = useState("");
+  const [removingResume, setRemovingResume] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -93,6 +94,22 @@ export default function Profile() {
     }
     setIsEditing(false);
     setError(null);
+  };
+
+  const handleRemoveResume = async () => {
+    setRemovingResume(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      await api.del("/resume");
+      setResume(null);
+      setSuccess("Resume removed successfully");
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to remove resume");
+    } finally {
+      setRemovingResume(false);
+    }
   };
 
   const initials = name
@@ -250,6 +267,13 @@ export default function Profile() {
                     Uploaded{" "}
                     {new Date(resume.uploaded_at).toLocaleDateString()}
                   </p>
+                  <button
+                    onClick={handleRemoveResume}
+                    disabled={removingResume}
+                    className="mt-3 text-xs px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition disabled:opacity-50"
+                  >
+                    {removingResume ? "Removing..." : "Remove Resume"}
+                  </button>
                 </>
               ) : (
                 <p className="font-medium text-yellow-400 mt-1">

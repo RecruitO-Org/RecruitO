@@ -9,6 +9,11 @@ from sqlalchemy.orm import Session
 from app.deps import get_db
 from app.auth import get_current_user, RoleChecker
 from app import models, schemas
+from app.services.resume_parser import (
+    MAX_FILE_BYTES,
+    ResumeParseError,
+    extract_text_from_bytes,
+)
 
 router = APIRouter(tags=["profile"])
 
@@ -78,10 +83,23 @@ def upload_resume(
             detail=f"Unsupported file type. Allowed: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
         )
 
+    content = file.file.read()
+    if len(content) > MAX_FILE_BYTES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File too large. Maximum size is {MAX_FILE_BYTES // (1024 * 1024)} MB.",
+        )
+
+    # Extract and normalize the resume text. Invalid/empty files are rejected
+    # before anything is written to disk.
+    try:
+        parsed_text = extract_text_from_bytes(content, extension)
+    except ResumeParseError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
     stored_name = f"{current_user.id}_{uuid.uuid4().hex}.{extension}"
     stored_path = os.path.join(UPLOAD_DIR, stored_name)
 
-    content = file.file.read()
     with open(stored_path, "wb") as f:
         f.write(content)
 
@@ -90,8 +108,42 @@ def upload_resume(
         original_filename=original_filename,
         stored_path=stored_path,
         extension=extension,
+        parsed_text=parsed_text,
     )
     db.add(resume)
     db.commit()
     db.refresh(resume)
     return resume
+
+
+def _delete_resume_file(resume: models.Resume) -> None:
+    """Best-effort removal of a resume file from disk; never raises."""
+    try:
+        if resume.stored_path and os.path.exists(resume.stored_path):
+            os.remove(resume.stored_path)
+    except OSError:
+        pass
+
+
+@router.delete("/resume", status_code=204)
+def delete_resume(
+    current_user: models.User = Depends(RoleChecker(["user"])),
+    db: Session = Depends(get_db),
+):
+    """Delete the candidate's most recent resume: file and database record.
+
+    Ownership is enforced by scoping the query to the current user's id.
+    """
+    resume = (
+        db.query(models.Resume)
+        .filter(models.Resume.user_id == current_user.id)
+        .order_by(models.Resume.uploaded_at.desc())
+        .first()
+    )
+    if resume is None:
+        raise HTTPException(status_code=404, detail="No resume uploaded yet")
+
+    _delete_resume_file(resume)
+    db.delete(resume)
+    db.commit()
+    return None

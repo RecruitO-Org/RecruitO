@@ -36,6 +36,7 @@ export default function DashboardLayout() {
     { name: "Profile", path: "/dashboard/profile" },
     { name: "Jobs", path: "/dashboard/jobs" },
     { name: "Internships", path: "/dashboard/internships" },
+    { name: "Applications", path: "/dashboard/applications" },
     { name: "Interview", path: "/dashboard/interview"},
     { name: "Resume", path: "/dashboard/resume" },
     { name: "AI Chatbot", path: "/dashboard/chatbot" },

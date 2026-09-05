@@ -18,10 +18,14 @@ async function request<T>(
 ): Promise<T> {
   const { token, logout } = useAuthStore.getState();
 
-  // Expired token: clear it and force a re-login before hitting the server.
+  // A stale/expired token must NOT block public requests such as /login or
+  // /signup: clear it from the store and proceed without an Authorization
+  // header. If the endpoint requires auth, the server will respond 401 and the
+  // handler below surfaces the session-expired message.
+  let activeToken: string | null = token;
   if (isTokenExpired(token)) {
     logout();
-    throw new Error("Your session has expired. Please sign in again.");
+    activeToken = null;
   }
 
   const headers: Record<string, string> = {
@@ -36,8 +40,8 @@ async function request<T>(
     body = JSON.stringify(options.body);
   }
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+  if (activeToken) {
+    headers["Authorization"] = `Bearer ${activeToken}`;
   }
 
   const res = await fetch(`${BASE_URL}${path}`, {

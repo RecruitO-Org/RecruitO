@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.deps import get_db
 from app.auth import get_current_user, RoleChecker
 from app import models, schemas
+from app.services.resume_parser import compute_match_score
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
@@ -72,11 +73,27 @@ def create_application(
             status_code=409, detail="You have already applied to this job"
         )
 
+    # Compute the rule-based ATS match score from the candidate's most recent
+    # resume text compared against the job's required skills and description.
+    match_score = None
+    resume = (
+        db.query(models.Resume)
+        .filter(models.Resume.user_id == current_user.id)
+        .order_by(models.Resume.uploaded_at.desc())
+        .first()
+    )
+    if resume is not None and resume.parsed_text:
+        match_score = compute_match_score(
+            resume.parsed_text,
+            job.skills or [],
+            job.description,
+        )
+
     application = models.Application(
         job_id=job.id,
         user_id=current_user.id,
         status=models.ApplicationStatusEnum.applied,
-        match_score=None,
+        match_score=match_score,
     )
     db.add(application)
     db.commit()

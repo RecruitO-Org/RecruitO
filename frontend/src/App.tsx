@@ -14,6 +14,7 @@ import Resume from "./pages/user_dashboard/Resume";
 import AIChatbot from "./pages/user_dashboard/AIChatbot";
 import Settings from "./pages/user_dashboard/Settings";
 import Interviews from "./pages/user_dashboard/Interviews";
+import UserApplications from "./pages/user_dashboard/UserApplications";
 
 // Company Imports
 import CompanyDashboard from "./pages/company_dashboard/CompanyDashboard";
@@ -64,6 +65,7 @@ function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="jobs" element={<Jobs />} />
           <Route path="internships" element={<Internships />} />
+          <Route path="applications" element={<UserApplications />} />
           <Route path="resume" element={<Resume />} />
           <Route path="chatbot" element={<AIChatbot />} />
           <Route path="settings" element={<Settings />} />
