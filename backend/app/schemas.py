@@ -198,6 +198,25 @@ class SkillGapReport(BaseModel):
 
 
 # -----------------------------
+# Semantic match
+# -----------------------------
+class SemanticMatchOut(BaseModel):
+    application_id: int
+    job_id: int
+    job_title: Optional[str] = None
+    company_name: Optional[str] = None
+    candidate_name: Optional[str] = None
+    # Existing rule-based ATS score, returned unchanged.
+    match_score: Optional[int] = None
+    # New, independent semantic similarity score (0-100).
+    semantic_score: Optional[int] = None
+    cosine_similarity: Optional[float] = None
+    embedding_model: Optional[str] = None
+    used_fallback: bool = False
+    explanation: Optional[str] = None
+
+
+# -----------------------------
 # Interview
 # -----------------------------
 class InterviewCreate(BaseModel):

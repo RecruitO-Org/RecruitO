@@ -31,10 +31,26 @@ interface SkillGapReport {
   summary: string;
 }
 
+interface SemanticMatchData {
+  application_id: number;
+  job_id: number;
+  job_title: string | null;
+  company_name: string | null;
+  candidate_name: string | null;
+  match_score: number | null;
+  semantic_score: number | null;
+  cosine_similarity: number | null;
+  embedding_model: string | null;
+  used_fallback: boolean;
+  explanation: string | null;
+}
+
 export default function UserApplications() {
   const [applications, setApplications] = useState<ApplicationData[]>([]);
   const [skipGaps, setSkillGaps] = useState<Record<number, SkillGapReport | null>>({});
   const [gapErrors, setGapErrors] = useState<Record<number, string>>({});
+  const [semanticMatches, setSemanticMatches] = useState<Record<number, SemanticMatchData | null>>({});
+  const [semanticErrors, setSemanticErrors] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,32 +59,45 @@ export default function UserApplications() {
       .get<ApplicationData[]>("/applications")
       .then(async (apps) => {
         setApplications(apps);
-        // Fetch the skill-gap report for each application alongside the list.
+        // Fetch the skill-gap report and semantic score for each application
+        // alongside the list; both are independent of the ATS match score.
         const results = await Promise.all(
           apps.map(async (app) => {
             const id = app.id;
-            try {
-              const report = await api.get<SkillGapReport>(
-                `/applications/${id}/skill-gap`
-              );
-              return { id, report, gapError: null };
-            } catch (e) {
-              return {
-                id,
-                report: null,
-                gapError: e instanceof Error ? e.message : "No analysis available",
-              };
-            }
+            const [gapResult, semanticResult] = await Promise.all([
+              api
+                .get<SkillGapReport>(`/applications/${id}/skill-gap`)
+                .then((report) => ({ report, gapError: null }))
+                .catch((e) => ({
+                  report: null,
+                  gapError: e instanceof Error ? e.message : "No analysis available",
+                })),
+              api
+                .get<SemanticMatchData>(`/applications/${id}/semantic-match`)
+                .then((data) => ({ data, semanticError: null }))
+                .catch((e) => ({
+                  data: null,
+                  semanticError:
+                    e instanceof Error ? e.message : "No semantic match available",
+                })),
+            ]);
+            return { id, ...gapResult, ...semanticResult };
           })
         );
         const gaps: Record<number, SkillGapReport | null> = {};
-        const errs: Record<number, string> = {};
+        const gapErrs: Record<number, string> = {};
+        const sem: Record<number, SemanticMatchData | null> = {};
+        const semErrs: Record<number, string> = {};
         results.forEach((r) => {
           gaps[r.id] = r.report;
-          if (r.gapError) errs[r.id] = r.gapError;
+          if (r.gapError) gapErrs[r.id] = r.gapError;
+          sem[r.id] = r.data;
+          if (r.semanticError) semErrs[r.id] = r.semanticError;
         });
         setSkillGaps(gaps);
-        setGapErrors(errs);
+        setGapErrors(gapErrs);
+        setSemanticMatches(sem);
+        setSemanticErrors(semErrs);
       })
       .catch((e) =>
         setError(e instanceof Error ? e.message : "Failed to load applications")
@@ -92,6 +121,12 @@ export default function UserApplications() {
     if (coverage >= 80) return "bg-green-500";
     if (coverage >= 50) return "bg-yellow-500";
     return "bg-orange-500";
+  };
+
+  const semanticColor = (score: number) => {
+    if (score >= 80) return "text-blue-400";
+    if (score >= 50) return "text-cyan-400";
+    return "text-red-400";
   };
 
   return (
@@ -125,6 +160,8 @@ export default function UserApplications() {
             const gap = skipGaps[app.id];
             const gapError =
               gapErrors[app.id] ?? (app.match_score == null ? undefined : null);
+            const semantic = semanticMatches[app.id];
+            const semanticError = semanticErrors[app.id];
 
             return (
               <motion.div
@@ -182,6 +219,50 @@ export default function UserApplications() {
                       }`}
                       style={{ width: `${app.match_score ?? 0}%` }}
                     />
+                  </div>
+                )}
+
+                {/* SEMANTIC MATCH */}
+                {semantic ? (
+                  <div className="mt-5 p-4 rounded-xl bg-blue-500/5 border border-blue-500/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-semibold text-blue-300">
+                        Semantic Match
+                      </h3>
+                      <span className={`text-lg font-bold ${semanticColor(semantic.semantic_score ?? 0)}`}>
+                        {semantic.semantic_score != null ? `${semantic.semantic_score}%` : "N/A"}
+                      </span>
+                    </div>
+
+                    <div className="w-full bg-white/10 rounded-full h-2 mb-2">
+                      <div
+                        className={`h-2 rounded-full transition-all duration-700 ${
+                          (semantic.semantic_score ?? 0) >= 80
+                            ? "bg-blue-500"
+                            : (semantic.semantic_score ?? 0) >= 50
+                            ? "bg-cyan-500"
+                            : "bg-red-500"
+                        }`}
+                        style={{ width: `${semantic.semantic_score ?? 0}%` }}
+                      />
+                    </div>
+
+                    <p className="text-white/50 text-xs">
+                      {semantic.explanation}
+                      {semantic.used_fallback && (
+                        <span className="block text-yellow-500/80 mt-1">
+                          (Note: semantic model unavailable, local fallback used.)
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                ) : semanticError ? (
+                  <div className="mt-5 p-3 rounded-xl bg-white/5 border border-white/10 text-white/40 text-xs">
+                    {semanticError}
+                  </div>
+                ) : (
+                  <div className="mt-5 p-3 rounded-xl bg-white/5 border border-white/10 text-white/40 text-xs">
+                    Loading semantic match...
                   </div>
                 )}
 

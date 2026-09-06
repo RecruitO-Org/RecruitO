@@ -13,3 +13,7 @@ pypdf==6.17.0
 python-docx==1.2.0
 pytest==9.1.1
 httpx==0.28.1
+# Semantic (embedding-based) API matching. Installed with CPU torch.
+sentence-transformers==6.0.1
+numpy==2.5.2
+scipy==1.18.1

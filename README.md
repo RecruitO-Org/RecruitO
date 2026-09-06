@@ -169,6 +169,51 @@ Final Evaluation
 
 ---
 
+# Match Scoring
+
+RecruitO scores a resume against a job using two independent, explainable
+signals. Per-application results are exposed via:
+
+* `GET /applications/{id}/skill-gap` — matched vs. missing required skills.
+* `GET /applications/{id}/semantic-match` — embedding-based similarity.
+
+## 1. ATS Match Score (rule-based, unchanged)
+
+`backend/app/services/resume_parser.py::compute_match_score` returns a 0-100
+score as a weighted combination of two fixed components:
+
+```text
+skill_component    = (matched required skills / total required skills) * 70
+keyword_component  = (matched description keywords / total description keywords) * 30
+match_score        = round(skill_component + keyword_component)         # 0-100
+```
+
+When a job has no explicit skill list, the skill component is derived from
+known skills in the resume that also appear in the job description (capped at
+70). Matching is case-insensitive and tolerant to punctuation/hyphenation
+variants via the shared skill vocabulary.
+
+## 2. Semantic Match Score (embedding-based, independent)
+
+`backend/app/services/semantic_matcher.py::compute_semantic_score` uses a
+Sentence Transformer model (`all-MiniLM-L6-v2`, local — no external LLM/API) to
+encode the resume text and the job description and compare them with cosine
+similarity:
+
+```text
+embed_resume = SentenceTransformer(resume_text)
+embed_job    = SentenceTransformer(job_description)
+cosine       = dot(normalize(embed_resume), normalize(embed_job))   # clamped to [0, 1]
+semantic_score = round(cosine * 100)                                # 0-100
+```
+
+The semantic score is returned **alongside** the ATS score and never modifies
+it. If the model cannot be loaded (offline / first-run), the service falls back
+to a deterministic hashed term-frequency embedding so the pipeline still works.
+Skill-gap analysis keeps using the rule-based skill matching described in task 1.
+
+---
+
 # Technology Stack
 
 ## Frontend

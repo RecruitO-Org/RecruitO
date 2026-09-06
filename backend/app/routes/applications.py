@@ -7,6 +7,7 @@ from app.auth import get_current_user, RoleChecker
 from app import models, schemas
 from app.services.resume_parser import compute_match_score
 from app.services.skill_gap import analyze_skill_gap
+from app.services.semantic_matcher import compute_semantic_score
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
@@ -207,6 +208,62 @@ def get_application_skill_gap(
         missing_count=report.missing_count,
         coverage_percent=report.coverage_percent,
         summary=report.summary,
+    )
+
+
+@router.get("/{application_id}/semantic-match", response_model=schemas.SemanticMatchOut)
+def get_application_semantic_match(
+    application_id: int,
+    current_user: models.User = Depends(any_auth),
+    db: Session = Depends(get_db),
+):
+    """Semantic (embedding) similarity between a resume and a job description.
+
+    Uses Sentence Transformers embeddings + cosine similarity to complement the
+    rule-based ATS score. The existing `match_score` is returned UNCHANGED; the
+    new `semantic_score` is an independent signal. Available to the candidate
+    who owns the application and to the hiring company / admin who manages it.
+    """
+    app_ = (
+        db.query(models.Application)
+        .filter(models.Application.id == application_id)
+        .first()
+    )
+    if app_ is None:
+        raise HTTPException(status_code=404, detail="Application not found")
+    if not _can_manage(db, app_, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this application",
+        )
+
+    resume = (
+        db.query(models.Resume)
+        .filter(models.Resume.user_id == app_.user_id)
+        .order_by(models.Resume.uploaded_at.desc())
+        .first()
+    )
+    if resume is None or not resume.parsed_text:
+        raise HTTPException(
+            status_code=404, detail="No resume available for semantic matching"
+        )
+
+    result = compute_semantic_score(resume.parsed_text, app_.job.description)
+
+    return schemas.SemanticMatchOut(
+        application_id=app_.id,
+        job_id=app_.job_id,
+        job_title=app_.job.title if app_.job else None,
+        company_name=(
+            app_.job.company.name if app_.job and app_.job.company else None
+        ),
+        candidate_name=app_.user.name if app_.user else None,
+        match_score=app_.match_score,
+        semantic_score=result.score,
+        cosine_similarity=result.cosine_similarity,
+        embedding_model=result.embedding_model,
+        used_fallback=result.used_fallback,
+        explanation=result.explanation,
     )
 
 
