@@ -6,6 +6,7 @@ from app.deps import get_db
 from app.auth import get_current_user, RoleChecker
 from app import models, schemas
 from app.services.resume_parser import compute_match_score
+from app.services.skill_gap import analyze_skill_gap
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
@@ -148,6 +149,65 @@ def get_application(
             detail="You do not have access to this application",
         )
     return _enrich(app_)
+
+
+@router.get("/{application_id}/skill-gap", response_model=schemas.SkillGapReport)
+def get_application_skill_gap(
+    application_id: int,
+    current_user: models.User = Depends(any_auth),
+    db: Session = Depends(get_db),
+):
+    """Rule-based skill gap report for an application (no LLM).
+
+    Compares the candidate's most recent resume against the job's required
+    skills using the same vocabulary/normalization as the ATS matcher. The
+    report is available to the candidate who owns the application and to the
+    hiring company / admin who manages it.
+    """
+    app_ = (
+        db.query(models.Application)
+        .filter(models.Application.id == application_id)
+        .first()
+    )
+    if app_ is None:
+        raise HTTPException(status_code=404, detail="Application not found")
+    if not _can_manage(db, app_, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this application",
+        )
+
+    resume = (
+        db.query(models.Resume)
+        .filter(models.Resume.user_id == app_.user_id)
+        .order_by(models.Resume.uploaded_at.desc())
+        .first()
+    )
+    if resume is None or not resume.parsed_text:
+        raise HTTPException(
+            status_code=404, detail="No resume available for skill gap analysis"
+        )
+
+    report = analyze_skill_gap(resume.parsed_text, app_.job.skills or [], app_.job.description)
+
+    return schemas.SkillGapReport(
+        application_id=app_.id,
+        job_id=app_.job_id,
+        job_title=app_.job.title if app_.job else None,
+        company_name=(
+            app_.job.company.name if app_.job and app_.job.company else None
+        ),
+        required_skills=report.required_skills,
+        matched_skills=report.matched_skills,
+        missing_skills=[
+            schemas.SkillGapItem(skill=i.skill, recommendation=i.recommendation)
+            for i in report.missing_skills
+        ],
+        matched_count=report.matched_count,
+        missing_count=report.missing_count,
+        coverage_percent=report.coverage_percent,
+        summary=report.summary,
+    )
 
 
 @router.put("/{application_id}", response_model=schemas.ApplicationOut)
