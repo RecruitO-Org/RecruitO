@@ -176,6 +176,28 @@ class ApplicationUpdate(BaseModel):
 
 
 # -----------------------------
+# Skill Gap
+# -----------------------------
+class SkillGapItem(BaseModel):
+    skill: str
+    recommendation: str
+
+
+class SkillGapReport(BaseModel):
+    application_id: int
+    job_id: int
+    job_title: Optional[str] = None
+    company_name: Optional[str] = None
+    required_skills: List[str] = []
+    matched_skills: List[str] = []
+    missing_skills: List[SkillGapItem] = []
+    matched_count: int = 0
+    missing_count: int = 0
+    coverage_percent: int = 0
+    summary: str = ""
+
+
+# -----------------------------
 # Interview
 # -----------------------------
 class InterviewCreate(BaseModel):
